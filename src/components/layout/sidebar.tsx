@@ -11,8 +11,10 @@ import {
   BarChart3,
   Settings,
   Zap,
+  Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MANAGED_BRANDS } from '@/types';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -32,6 +34,29 @@ export function Sidebar() {
         <Zap className="h-6 w-6 text-indigo-400" />
         <span className="text-lg font-bold">AffiliateHunter</span>
         <span className="text-xs text-indigo-400 font-medium">AI</span>
+      </div>
+
+      {/* Brand Selector */}
+      <div className="px-3 py-3 border-b border-gray-800">
+        <div className="flex items-center gap-2 px-3 py-1.5">
+          <Building2 className="h-4 w-4 text-gray-400" />
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Managed Brands</span>
+        </div>
+        <div className="mt-1 space-y-0.5">
+          {MANAGED_BRANDS.map((brand) => (
+            <div
+              key={brand.id}
+              className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-300"
+            >
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: brand.color }}
+              />
+              <span>{brand.name}</span>
+              <span className="ml-auto text-gray-500 text-[10px]">{brand.category}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">

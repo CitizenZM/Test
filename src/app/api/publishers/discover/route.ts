@@ -5,29 +5,28 @@ import { discoverPublishers } from '@/lib/ai/research-agent';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { keyword, category, product } = body;
+    const { keyword, category, product, brand } = body;
 
     if (!keyword) {
       return NextResponse.json({ error: 'Keyword is required' }, { status: 400 });
     }
 
-    const publishers = await discoverPublishers({ keyword, category, product });
+    const publishers = await discoverPublishers({ keyword, category, product, brand });
 
     if (publishers.length === 0) {
       return NextResponse.json([]);
     }
 
-    // Map AI results to existing Supabase schema
     const rows = publishers.map((p) => ({
-      publisher_name: p.name,
+      publisher_name: p.publisher_name,
       website: p.website,
       domain: p.website ? new URL(p.website.startsWith('http') ? p.website : `https://${p.website}`).hostname : null,
       category: p.category,
-      affiliate_type: p.content_type,
-      estimated_monthly_visits: p.traffic_estimate,
+      affiliate_type: p.affiliate_type,
+      estimated_monthly_visits: p.estimated_monthly_visits,
       affiliate_network: p.affiliate_friendly ? 'Affiliate Friendly' : null,
-      description: p.audience,
-      summary_note: p.notes,
+      description: p.description,
+      summary_note: p.summary_note,
       enrichment_status: 'ai_discovered',
     }));
 

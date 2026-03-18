@@ -90,7 +90,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     <>
       <Header
         title={campaign.name}
-        description={`${campaign.brand || 'No brand'} - ${campaign.category || 'Uncategorized'}`}
+        description={`${campaign.brand_name || 'No brand'} - ${campaign.category || 'Uncategorized'}`}
         actions={
           <div className="flex gap-3">
             <Link href="/campaigns">
@@ -110,7 +110,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           <Card><p className="text-sm text-gray-500">Status</p><Badge variant={campaign.status === 'active' ? 'success' : 'default'} className="mt-1">{campaign.status}</Badge></Card>
           <Card><p className="text-sm text-gray-500">Steps</p><p className="text-2xl font-bold mt-1">{sequence.length}</p></Card>
           <Card><p className="text-sm text-gray-500">Duration</p><p className="text-2xl font-bold mt-1">{sequence.length > 0 ? sequence[sequence.length - 1].day : 0} days</p></Card>
-          <Card><p className="text-sm text-gray-500">Brand</p><p className="text-lg font-semibold mt-1">{campaign.brand || '-'}</p></Card>
+          <Card><p className="text-sm text-gray-500">Brand</p><p className="text-lg font-semibold mt-1">{campaign.brand_name || '-'}</p></Card>
         </div>
 
         <Card>

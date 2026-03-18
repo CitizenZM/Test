@@ -8,9 +8,16 @@ export async function GET(
   const { id } = await params;
   const supabase = createServiceClient();
 
-  const [publisherRes, outreachRes] = await Promise.all([
+  const [publisherRes, outreachRes, editorsRes] = await Promise.all([
     supabase.from('publishers').select('*').eq('id', id).single(),
-    supabase.from('outreach').select('*').eq('publisher_id', id).order('created_at', { ascending: false }),
+    supabase.from('outreach').select('*').eq('publisher_id', id).order('created_at', { ascending: false }).then(
+      (res) => res,
+      () => ({ data: [], error: null })
+    ),
+    supabase.from('publisher_editors').select('*').eq('publisher_id', id).order('discovered_at', { ascending: false }).then(
+      (res) => res,
+      () => ({ data: [], error: null })
+    ),
   ]);
 
   if (publisherRes.error) {
@@ -20,6 +27,7 @@ export async function GET(
   return NextResponse.json({
     publisher: publisherRes.data,
     outreach: outreachRes.data || [],
+    editors: editorsRes.data || [],
   });
 }
 

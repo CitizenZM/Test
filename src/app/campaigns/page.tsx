@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Modal } from '@/components/ui/modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Campaign } from '@/types';
+import { Campaign, CampaignType, MANAGED_BRANDS, PUBLISHER_CATEGORIES } from '@/types';
 import { Plus, Loader2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import Link from 'next/link';
@@ -21,13 +21,21 @@ const statusVariant: Record<string, 'default' | 'success' | 'warning' | 'info'> 
   completed: 'info',
 };
 
+const campaignTypeLabels: Record<CampaignType, string> = {
+  recruitment: 'Publisher Recruitment',
+  product_launch: 'Product Launch',
+  seasonal: 'Seasonal Campaign',
+  re_engagement: 'Re-engagement',
+};
+
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newBrand, setNewBrand] = useState('');
+  const [newBrand, setNewBrand] = useState('tcl');
   const [newCategory, setNewCategory] = useState('');
+  const [newType, setNewType] = useState<CampaignType>('recruitment');
 
   useEffect(() => {
     fetchCampaigns();
@@ -46,17 +54,25 @@ export default function CampaignsPage() {
 
   async function handleCreate() {
     if (!newName.trim()) return;
+    const brand = MANAGED_BRANDS.find(b => b.id === newBrand);
     try {
       const res = await fetch('/api/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName, brand: newBrand, category: newCategory }),
+        body: JSON.stringify({
+          name: newName,
+          brand_name: brand?.name || newBrand,
+          brand_id: newBrand,
+          category: newCategory,
+          campaign_type: newType,
+        }),
       });
       if (res.ok) {
         setShowCreate(false);
         setNewName('');
-        setNewBrand('');
+        setNewBrand('tcl');
         setNewCategory('');
+        setNewType('recruitment');
         fetchCampaigns();
       }
     } catch {
@@ -84,6 +100,7 @@ export default function CampaignsPage() {
         ) : campaigns.length === 0 ? (
           <Card className="flex flex-col items-center justify-center py-16">
             <p className="text-gray-500">No campaigns yet</p>
+            <p className="mt-1 text-sm text-gray-400">Create a campaign to start recruiting publishers for TCL or Levoit</p>
             <Button className="mt-4" onClick={() => setShowCreate(true)}>
               <Plus className="mr-2 h-4 w-4" /> Create your first campaign
             </Button>
@@ -94,6 +111,7 @@ export default function CampaignsPage() {
               <TableRow>
                 <TableHead>Campaign</TableHead>
                 <TableHead>Brand</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Steps</TableHead>
@@ -108,7 +126,10 @@ export default function CampaignsPage() {
                       {c.name}
                     </Link>
                   </TableCell>
-                  <TableCell>{c.brand || '-'}</TableCell>
+                  <TableCell>{c.brand_name || '-'}</TableCell>
+                  <TableCell>
+                    <Badge variant="info">{campaignTypeLabels[c.campaign_type] || c.campaign_type}</Badge>
+                  </TableCell>
                   <TableCell>{c.category ? <Badge>{c.category}</Badge> : '-'}</TableCell>
                   <TableCell><Badge variant={statusVariant[c.status] || 'default'}>{c.status}</Badge></TableCell>
                   <TableCell>{c.sequence?.length || 0} steps</TableCell>
@@ -122,15 +143,36 @@ export default function CampaignsPage() {
 
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create Campaign">
         <div className="space-y-4">
-          <Input id="name" label="Campaign Name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Q1 Tech Publishers" />
-          <Input id="brand" label="Brand" value={newBrand} onChange={(e) => setNewBrand(e.target.value)} placeholder="e.g. Gymshark" />
-          <Select id="cat" label="Category" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} options={[
-            { value: '', label: 'Select category' },
-            { value: 'Tech', label: 'Tech' },
-            { value: 'Fitness', label: 'Fitness' },
-            { value: 'Finance', label: 'Finance' },
-            { value: 'Lifestyle', label: 'Lifestyle' },
-          ]} />
+          <Input id="name" label="Campaign Name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. TCL Q1 Publisher Recruitment" />
+          <Select
+            id="brand"
+            label="Brand"
+            value={newBrand}
+            onChange={(e) => setNewBrand(e.target.value)}
+            options={MANAGED_BRANDS.map((b) => ({ value: b.id, label: b.name }))}
+          />
+          <Select
+            id="type"
+            label="Campaign Type"
+            value={newType}
+            onChange={(e) => setNewType(e.target.value as CampaignType)}
+            options={[
+              { value: 'recruitment', label: 'Publisher Recruitment' },
+              { value: 'product_launch', label: 'Product Launch' },
+              { value: 'seasonal', label: 'Seasonal Campaign (Black Friday, Prime Day)' },
+              { value: 're_engagement', label: 'Re-engagement' },
+            ]}
+          />
+          <Select
+            id="cat"
+            label="Target Category"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            options={[
+              { value: '', label: 'All Categories' },
+              ...PUBLISHER_CATEGORIES.map((c) => ({ value: c, label: c })),
+            ]}
+          />
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={!newName.trim()}>Create</Button>

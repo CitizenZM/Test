@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     .from('campaigns')
     .insert({
       name: body.name,
-      brand: body.brand || null,
+      brand_name: body.brand_name || null,
       category: body.category || null,
       status: 'draft',
       sequence: body.sequence || [],
