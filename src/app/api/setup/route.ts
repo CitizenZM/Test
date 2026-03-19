@@ -16,9 +16,16 @@ export async function GET() {
   }
 
   const allOk = Object.values(results).every((r) => r.ok);
+  const hasApiKey = !!(process.env.ANTHROPIC_API_KEY);
 
   return NextResponse.json({
     status: allOk ? 'ok' : 'partial',
+    ai_ready: hasApiKey,
     tables: results,
+    action_needed: !allOk
+      ? 'Run SQL from supabase/migrations/003_full_publishers_schema.sql in Supabase SQL Editor'
+      : !hasApiKey
+      ? 'Add ANTHROPIC_API_KEY to Vercel environment variables'
+      : null,
   });
 }

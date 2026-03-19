@@ -28,22 +28,23 @@ export async function POST(request: NextRequest) {
     let totalSaved = 0;
     const errors: string[] = [];
 
-    // Build list of search tasks: combine keywords with categories
-    // Up to 20 tasks to get ~200 publishers
+    // Build 20 search tasks across all keywords × categories for ~200 publishers
     const tasks: Array<{ keyword: string; category: string }> = [];
-    for (let i = 0; i < Math.min(keywords.length, 20); i++) {
-      const kw = keywords[i % keywords.length];
+
+    // Pass 1: each keyword with rotating categories
+    for (let i = 0; i < keywords.length && tasks.length < 20; i++) {
       const cat = categories.length > 0 ? categories[i % categories.length] : '';
-      tasks.push({ keyword: kw, category: cat });
+      tasks.push({ keyword: keywords[i], category: cat });
     }
-    // If we have fewer than 15 tasks, add more variations
-    if (tasks.length < 15 && keywords.length > 0) {
-      for (let i = tasks.length; i < 15; i++) {
-        const kw = keywords[i % keywords.length];
-        const cat =
-          categories.length > 1 ? categories[(i + 1) % categories.length] : '';
-        tasks.push({ keyword: kw + ' review affiliate', category: cat });
-      }
+
+    // Pass 2: fill remaining slots with keyword variations
+    const variations = ['affiliate partner', 'review site', 'deal publisher', 'coupon site', 'content creator'];
+    while (tasks.length < 20) {
+      const idx = tasks.length - keywords.length;
+      const kw = keywords[idx % keywords.length];
+      const variation = variations[idx % variations.length];
+      const cat = categories.length > 0 ? categories[(tasks.length) % categories.length] : '';
+      tasks.push({ keyword: `${kw} ${variation}`, category: cat });
     }
 
     for (const task of tasks) {

@@ -78,7 +78,7 @@ function PublishersPageInner() {
   const [loading, setLoading] = useState(false);
   const [discovering, setDiscovering] = useState(false);
   const [bulkDiscovering, setBulkDiscovering] = useState(false);
-  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; found: number } | null>(null);
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; found: number; tasks_run?: number } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   // Brand profile integration
@@ -255,7 +255,7 @@ function PublishersPageInner() {
       // Handle error
     } finally {
       setBulkDiscovering(false);
-      setTimeout(() => setBulkProgress(null), 4000);
+      // Don't auto-hide - user can dismiss manually
     }
   }
 
@@ -553,6 +553,39 @@ function PublishersPageInner() {
             {totalCount > 0 ? `Page ${page + 1} of ${totalPages} (${totalCount.toLocaleString()} total)` : `${publishers.length} publishers`}
           </p>
         </div>
+
+        {/* Bulk Discovery Progress */}
+        {bulkDiscovering && (
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 flex items-center gap-4">
+            <Loader2 className="h-5 w-5 animate-spin text-indigo-600 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-indigo-900">
+                Discovering publishers for {selectedBrand?.brand_name}...
+              </p>
+              <p className="text-xs text-indigo-600 mt-0.5">
+                AI is searching across all strategy keywords and categories. This takes 2-3 minutes and will find 150-200 publishers.
+              </p>
+              <div className="mt-2 h-1.5 rounded-full bg-indigo-200 overflow-hidden">
+                <div className="h-full rounded-full bg-indigo-600 animate-pulse" style={{ width: '60%' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Discovery Result */}
+        {!bulkDiscovering && bulkProgress && bulkProgress.found > 0 && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-900">
+                ✓ Bulk Discovery Complete — {bulkProgress.found} new publishers added
+              </p>
+              <p className="text-xs text-green-700 mt-0.5">
+                {bulkProgress.tasks_run} keyword searches completed. Publisher list updated below.
+              </p>
+            </div>
+            <button onClick={() => setBulkProgress(null)} className="text-green-500 hover:text-green-700 text-lg">×</button>
+          </div>
+        )}
 
         {showFilters && (
           <div className="rounded-lg border border-gray-200 bg-white p-4 grid grid-cols-2 gap-4 md:grid-cols-4">
