@@ -10,7 +10,7 @@ export async function GET() {
   return NextResponse.json({
     anthropic_configured: hasAnthropicKey,
     anthropic_key_preview: hasAnthropicKey
-      ? `${getCachedSetting('ANTHROPIC_API_KEY')!.substring(0, 12)}...`
+      ? `${getCachedSetting('ANTHROPIC_API_KEY')!.substring(0, 16)}...`
       : null,
   });
 }
@@ -34,28 +34,37 @@ export async function POST(request: NextRequest) {
         messages: [{ role: 'user', content: 'Say: OK' }],
       });
       if (!testResult.content.length) {
-        return NextResponse.json({ error: 'API key test failed — no response' }, { status: 400 });
+        return NextResponse.json({ error: 'API key test failed — no response received' }, { status: 400 });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Invalid API key';
       return NextResponse.json({ error: `API key validation failed: ${msg}` }, { status: 400 });
     }
 
-    // Cache immediately so current process uses it
+    // Cache immediately for this invocation
     setCachedSetting('ANTHROPIC_API_KEY', trimmedKey);
 
-    // Persist to Vercel environment variables so it survives restarts
-    try {
-      await persistToVercel('ANTHROPIC_API_KEY', trimmedKey);
-    } catch (err) {
-      // Non-fatal — key is cached for this session
-      console.warn('Failed to persist to Vercel:', err);
+    let deploymentUrl: string | null = null;
+
+    // Persist to Vercel env vars and trigger redeploy
+    if (VERCEL_TOKEN) {
+      try {
+        await upsertVercelEnv('ANTHROPIC_API_KEY', trimmedKey);
+        const deployment = await triggerRedeploy();
+        deploymentUrl = deployment?.url || null;
+      } catch (err) {
+        console.warn('Vercel persistence failed:', err);
+      }
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Anthropic API key saved and verified successfully',
-      key_preview: `${trimmedKey.substring(0, 12)}...`,
+      message: deploymentUrl
+        ? 'API key saved. Redeploying now — AI features will be active in ~2 minutes.'
+        : 'API key saved and verified. Restart the server to apply across all requests.',
+      key_preview: `${trimmedKey.substring(0, 16)}...`,
+      deploying: !!deploymentUrl,
+      deployment_url: deploymentUrl,
     });
   } catch (err) {
     return NextResponse.json(
@@ -65,8 +74,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function persistToVercel(key: string, value: string) {
-  // First check if the env var already exists
+async function upsertVercelEnv(key: string, value: string) {
+  // Check if env var exists
   const listRes = await fetch(
     `https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env`,
     { headers: { Authorization: `Bearer ${VERCEL_TOKEN}` } }
@@ -74,36 +83,53 @@ async function persistToVercel(key: string, value: string) {
   const listData = await listRes.json();
   const existing = listData.envs?.find((e: { key: string }) => e.key === key);
 
+  const payload = { value, target: ['production', 'preview', 'development'] };
+
   if (existing) {
-    // Update existing
     await fetch(
       `https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env/${existing.id}`,
       {
         method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${VERCEL_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ value, target: ['production', 'preview', 'development'] }),
+        headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       }
     );
   } else {
-    // Create new
     await fetch(
       `https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env`,
       {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${VERCEL_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          key,
-          value,
-          type: 'encrypted',
-          target: ['production', 'preview', 'development'],
-        }),
+        headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, type: 'encrypted', ...payload }),
       }
     );
   }
+}
+
+async function triggerRedeploy() {
+  // Get the latest production deployment to redeploy from
+  const deploymentsRes = await fetch(
+    `https://api.vercel.com/v6/deployments?projectId=${VERCEL_PROJECT_ID}&limit=1&target=production`,
+    { headers: { Authorization: `Bearer ${VERCEL_TOKEN}` } }
+  );
+  const deploymentsData = await deploymentsRes.json();
+  const latestDeployment = deploymentsData.deployments?.[0];
+
+  if (!latestDeployment) return null;
+
+  // Trigger redeploy
+  const redeployRes = await fetch(
+    `https://api.vercel.com/v13/deployments`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: latestDeployment.name,
+        deploymentId: latestDeployment.uid,
+        target: 'production',
+      }),
+    }
+  );
+  const redeployData = await redeployRes.json();
+  return redeployData;
 }

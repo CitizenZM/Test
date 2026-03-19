@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Header } from '@/components/layout/header';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { MANAGED_BRANDS } from '@/types';
 import {
   Save, ExternalLink, Key, Mail, Building2, Globe,
-  CheckCircle2, XCircle, Loader2, AlertTriangle, Eye, EyeOff
+  CheckCircle2, XCircle, Loader2, AlertTriangle, Eye, EyeOff,
+  RefreshCw
 } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -19,7 +20,9 @@ export default function SettingsPage() {
   const [anthropicPreview, setAnthropicPreview] = useState<string | null>(null);
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saveResult, setSaveResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [saveResult, setSaveResult] = useState<{ ok: boolean; message: string; deploying?: boolean } | null>(null);
+  const [deploying, setDeploying] = useState(false);
+  const [deployCountdown, setDeployCountdown] = useState(0);
 
   // Other settings
   const [impactSid, setImpactSid] = useState('');
@@ -28,7 +31,7 @@ export default function SettingsPage() {
   const [senderEmail, setSenderEmail] = useState('affiliate@celldigital.co');
   const [senderName, setSenderName] = useState('Cell Digital Partnerships');
 
-  useEffect(() => {
+  const checkStatus = useCallback(() => {
     fetch('/api/settings')
       .then(r => r.json())
       .then(data => {
@@ -37,6 +40,28 @@ export default function SettingsPage() {
       })
       .catch(() => setAnthropicStatus('not_set'));
   }, []);
+
+  useEffect(() => {
+    checkStatus();
+  }, [checkStatus]);
+
+  // Countdown + auto-reload when deploying
+  useEffect(() => {
+    if (!deploying) return;
+    setDeployCountdown(120);
+    const interval = setInterval(() => {
+      setDeployCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setDeploying(false);
+          window.location.reload();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [deploying]);
 
   async function handleSaveAnthropicKey() {
     if (!anthropicKey.trim()) return;
@@ -50,10 +75,13 @@ export default function SettingsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setSaveResult({ ok: true, message: data.message });
+        setSaveResult({ ok: true, message: data.message, deploying: data.deploying });
         setAnthropicStatus('configured');
         setAnthropicPreview(data.key_preview);
         setAnthropicKey('');
+        if (data.deploying) {
+          setDeploying(true);
+        }
       } else {
         setSaveResult({ ok: false, message: data.error || 'Failed to save' });
       }
@@ -137,7 +165,25 @@ export default function SettingsPage() {
               </button>
             </div>
 
-            {saveResult && (
+            {deploying && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <RefreshCw className="h-5 w-5 text-blue-500 animate-spin" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-800">Deploying with new API key...</p>
+                    <p className="text-xs text-blue-600 mt-0.5">AI features will be active in ~{deployCountdown}s. Page will reload automatically.</p>
+                  </div>
+                </div>
+                <div className="h-2 rounded-full bg-blue-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-blue-500 transition-all duration-1000"
+                    style={{ width: `${Math.max(5, ((120 - deployCountdown) / 120) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {saveResult && !deploying && (
               <div className={`flex items-center gap-2 text-sm p-3 rounded-lg ${
                 saveResult.ok
                   ? 'bg-green-50 text-green-700 border border-green-200'
