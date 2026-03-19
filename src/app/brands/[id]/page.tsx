@@ -46,6 +46,7 @@ export default function BrandDetailPage() {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   // Form state
   const [brandName, setBrandName] = useState('');
@@ -133,6 +134,7 @@ export default function BrandDetailPage() {
 
   async function handleGenerateStrategy() {
     setGenerating(true);
+    setGenerateError(null);
     try {
       // Save profile first
       await fetch(`/api/brands/${brandId}`, {
@@ -153,9 +155,17 @@ export default function BrandDetailPage() {
         const data = await res.json();
         setStrategy(data.strategy);
         setStrategyDate(new Date().toISOString());
+      } else {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.error || 'Strategy generation failed';
+        if (msg.includes('ANTHROPIC_API_KEY') || msg.includes('API key')) {
+          setGenerateError('AI not configured. Go to Settings to add your Anthropic API key.');
+        } else {
+          setGenerateError(msg);
+        }
       }
     } catch {
-      // Handle error
+      setGenerateError('Network error. Please try again.');
     } finally {
       setGenerating(false);
     }
@@ -330,6 +340,19 @@ export default function BrandDetailPage() {
 
           {/* Section B: AI Recruitment Strategy */}
           <div className="space-y-6">
+            {generateError && !generating && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex gap-3">
+                <span className="text-red-500 mt-0.5">⚠</span>
+                <div>
+                  <p className="text-sm font-medium text-red-800">{generateError}</p>
+                  {generateError.includes('Settings') && (
+                    <Link href="/settings" className="text-sm text-red-700 underline mt-1 block">
+                      Go to Settings →
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
             {generating ? (
               <Card>
                 <div className="flex flex-col items-center justify-center py-16 text-center">
