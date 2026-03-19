@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Sidebar } from "@/components/layout/sidebar";
+import { SetupBanner } from "@/components/layout/setup-banner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,10 @@ export default function RootLayout({
       <body className="antialiased font-sans">
         <div className="flex h-screen">
           <Sidebar />
-          <main className="flex-1 overflow-auto bg-gray-50">{children}</main>
+          <main className="flex-1 overflow-auto bg-gray-50">
+          <SetupBanner />
+          {children}
+        </main>
         </div>
       </body>
     </html>

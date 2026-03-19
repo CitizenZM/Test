@@ -1,25 +1,67 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/header';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MANAGED_BRANDS } from '@/types';
-import { Save, ExternalLink, Key, Mail, Building2, Globe } from 'lucide-react';
+import {
+  Save, ExternalLink, Key, Mail, Building2, Globe,
+  CheckCircle2, XCircle, Loader2, AlertTriangle, Eye, EyeOff
+} from 'lucide-react';
 
 export default function SettingsPage() {
+  // Anthropic key state
+  const [anthropicKey, setAnthropicKey] = useState('');
+  const [anthropicStatus, setAnthropicStatus] = useState<'unknown' | 'configured' | 'not_set'>('unknown');
+  const [anthropicPreview, setAnthropicPreview] = useState<string | null>(null);
+  const [showKey, setShowKey] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveResult, setSaveResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  // Other settings
   const [impactSid, setImpactSid] = useState('');
   const [impactToken, setImpactToken] = useState('');
   const [resendKey, setResendKey] = useState('');
   const [senderEmail, setSenderEmail] = useState('affiliate@celldigital.co');
   const [senderName, setSenderName] = useState('Cell Digital Partnerships');
-  const [saved, setSaved] = useState(false);
 
-  function handleSave() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(data => {
+        setAnthropicStatus(data.anthropic_configured ? 'configured' : 'not_set');
+        setAnthropicPreview(data.anthropic_key_preview || null);
+      })
+      .catch(() => setAnthropicStatus('not_set'));
+  }, []);
+
+  async function handleSaveAnthropicKey() {
+    if (!anthropicKey.trim()) return;
+    setSaving(true);
+    setSaveResult(null);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ anthropic_api_key: anthropicKey.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSaveResult({ ok: true, message: data.message });
+        setAnthropicStatus('configured');
+        setAnthropicPreview(data.key_preview);
+        setAnthropicKey('');
+      } else {
+        setSaveResult({ ok: false, message: data.error || 'Failed to save' });
+      }
+    } catch {
+      setSaveResult({ ok: false, message: 'Network error — please try again' });
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -27,6 +69,114 @@ export default function SettingsPage() {
       <Header title="Settings" description="Configure integrations and preferences" />
 
       <div className="p-8 space-y-6 max-w-4xl">
+        {/* AI Configuration — most important section */}
+        <Card>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="h-9 w-9 rounded-lg bg-violet-100 flex items-center justify-center">
+              <Key className="h-5 w-5 text-violet-600" />
+            </div>
+            <div>
+              <CardTitle>AI Configuration</CardTitle>
+              <p className="text-sm text-gray-500">Required for strategy generation and publisher discovery</p>
+            </div>
+            <div className="ml-auto">
+              {anthropicStatus === 'configured' && <Badge variant="success">AI Active</Badge>}
+              {anthropicStatus === 'not_set' && <Badge variant="warning">Setup Required</Badge>}
+            </div>
+          </div>
+
+          {anthropicStatus === 'not_set' && (
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 flex gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">Anthropic API Key Required</p>
+                <p className="text-sm text-amber-700 mt-1">
+                  All AI features (strategy generation, publisher discovery, outreach) require an Anthropic API key.
+                  Get yours free at{' '}
+                  <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer"
+                    className="font-medium underline">
+                    console.anthropic.com
+                  </a>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {anthropicStatus === 'configured' && (
+            <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <div>
+                <p className="text-sm font-medium text-green-800">API Key Configured</p>
+                {anthropicPreview && (
+                  <p className="text-xs text-green-600 font-mono mt-0.5">{anthropicPreview}</p>
+                )}
+              </div>
+              <p className="ml-auto text-xs text-green-600">Using claude-opus-4-6 (Claude MAX)</p>
+            </div>
+          )}
+
+          <div className="mt-5 space-y-3">
+            <p className="text-sm font-medium text-gray-700">
+              {anthropicStatus === 'configured' ? 'Update API Key' : 'Enter Your Anthropic API Key'}
+            </p>
+            <div className="relative">
+              <input
+                type={showKey ? 'text' : 'password'}
+                value={anthropicKey}
+                onChange={e => setAnthropicKey(e.target.value)}
+                placeholder="sk-ant-api03-..."
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveAnthropicKey(); }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey(!showKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+
+            {saveResult && (
+              <div className={`flex items-center gap-2 text-sm p-3 rounded-lg ${
+                saveResult.ok
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {saveResult.ok
+                  ? <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  : <XCircle className="h-4 w-4 shrink-0" />
+                }
+                {saveResult.message}
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleSaveAnthropicKey}
+                disabled={!anthropicKey.trim() || saving}
+              >
+                {saving ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing & Saving...</>
+                ) : (
+                  <><CheckCircle2 className="mr-2 h-4 w-4" /> Verify & Save Key</>
+                )}
+              </Button>
+              <a
+                href="https://console.anthropic.com/settings/keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-indigo-600 hover:underline flex items-center gap-1"
+              >
+                Get API Key <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+            <p className="text-xs text-gray-400">
+              The key is validated, encrypted, and stored securely. It persists across deployments.
+            </p>
+          </div>
+        </Card>
+
         {/* Managed Brands */}
         <Card>
           <CardTitle>Managed Brands</CardTitle>
@@ -79,15 +229,11 @@ export default function SettingsPage() {
               type="password"
             />
             <div className="flex items-center gap-3">
-              <Button onClick={handleSave} disabled={!impactSid || !impactToken}>
+              <Button disabled={!impactSid || !impactToken} variant="outline">
                 <Key className="mr-2 h-4 w-4" /> Save Credentials
               </Button>
-              <a
-                href="https://app.impact.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-indigo-600 hover:underline flex items-center gap-1"
-              >
+              <a href="https://app.impact.com" target="_blank" rel="noopener noreferrer"
+                className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
                 Open Impact.com <ExternalLink className="h-3 w-3" />
               </a>
             </div>
@@ -124,46 +270,45 @@ export default function SettingsPage() {
                 onChange={(e) => setSenderName(e.target.value)}
               />
             </div>
-            <Button onClick={handleSave}>
+            <Button variant="outline">
               <Save className="mr-2 h-4 w-4" /> Save Email Settings
             </Button>
           </div>
         </Card>
 
-        {/* API Keys */}
+        {/* API Key Status */}
         <Card>
-          <CardTitle>API Keys</CardTitle>
-          <p className="mt-1 text-sm text-gray-500">Manage API keys for AI and integrations</p>
+          <CardTitle>Integration Status</CardTitle>
+          <p className="mt-1 text-sm text-gray-500">Current state of all configured integrations</p>
           <div className="mt-4 space-y-3">
             <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
               <div className="flex items-center gap-2">
                 <Key className="h-4 w-4 text-gray-400" />
-                <span className="text-sm font-medium">Anthropic API Key</span>
+                <span className="text-sm font-medium">Anthropic Claude API</span>
+                {anthropicPreview && (
+                  <span className="text-xs text-gray-400 font-mono">{anthropicPreview}</span>
+                )}
               </div>
-              <Badge variant="success">Configured</Badge>
+              <Badge variant={anthropicStatus === 'configured' ? 'success' : 'warning'}>
+                {anthropicStatus === 'configured' ? 'Active' : 'Not Configured'}
+              </Badge>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
               <div className="flex items-center gap-2">
                 <Key className="h-4 w-4 text-gray-400" />
-                <span className="text-sm font-medium">Supabase Service Key</span>
+                <span className="text-sm font-medium">Supabase Database</span>
               </div>
-              <Badge variant="success">Configured</Badge>
+              <Badge variant="success">Connected</Badge>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-gray-400" />
-                <span className="text-sm font-medium">Resend API Key</span>
+                <span className="text-sm font-medium">Resend Email</span>
               </div>
               <Badge variant={resendKey ? 'success' : 'warning'}>{resendKey ? 'Configured' : 'Not Set'}</Badge>
             </div>
           </div>
         </Card>
-
-        {saved && (
-          <div className="fixed bottom-4 right-4 rounded-lg bg-green-50 border border-green-200 p-4 shadow-lg">
-            <p className="text-sm text-green-700 font-medium">Settings saved successfully</p>
-          </div>
-        )}
       </div>
     </>
   );

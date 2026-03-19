@@ -1,17 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { getCachedSetting } from '@/lib/settings-cache';
 
-let client: Anthropic | null = null;
-
+// Don't cache the client globally — re-create when the key changes
 export function getAnthropicClient(): Anthropic {
-  if (!client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        'ANTHROPIC_API_KEY is not configured. Add it to your Vercel environment variables or .env.local file. ' +
-        'Get your API key at https://console.anthropic.com'
-      );
-    }
-    client = new Anthropic({ apiKey });
+  const apiKey = getCachedSetting('ANTHROPIC_API_KEY');
+  if (!apiKey) {
+    throw new Error(
+      'ANTHROPIC_API_KEY is not configured. Go to Settings to add your Anthropic API key. ' +
+      'Get your API key at https://console.anthropic.com'
+    );
   }
-  return client;
+  return new Anthropic({ apiKey });
 }
