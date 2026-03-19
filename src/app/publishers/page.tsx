@@ -274,7 +274,10 @@ function PublishersPageInner() {
         title="Publisher Finder"
         description={`Discover affiliate publishers from ${totalCount.toLocaleString()} records`}
         actions={
-          <a href="/api/reports?type=publishers&format=csv" download="publishers_export.csv">
+          <a
+            href={`/api/reports?format=csv${category ? `&category=${encodeURIComponent(category)}` : ''}${tier ? `&tier=${encodeURIComponent(tier)}` : ''}${network ? `&network=${encodeURIComponent(network)}` : ''}${hasEmail === 'true' ? '&has_email=true' : ''}`}
+            download="publishers_export.csv"
+          >
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" /> Export CSV
             </Button>
@@ -607,17 +610,6 @@ function PublishersPageInner() {
                 { value: 'false', label: 'No' },
               ]}
             />
-          </div>
-        )}
-
-        {bulkProgress && (
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 flex items-center gap-3">
-            <Loader2 className={cn('h-5 w-5 text-indigo-600', bulkDiscovering && 'animate-spin')} />
-            <span className="text-sm font-medium text-indigo-800">
-              {bulkDiscovering
-                ? `Discovering publishers... ${bulkProgress.current}/${bulkProgress.total} keywords searched, ${bulkProgress.found} publishers found`
-                : `Discovery complete — ${bulkProgress.found} publishers saved to database`}
-            </span>
           </div>
         )}
 

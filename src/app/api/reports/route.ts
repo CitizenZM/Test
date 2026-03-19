@@ -24,6 +24,10 @@ export async function GET(request: NextRequest) {
   const search = request.nextUrl.searchParams.get('search');
   const category = request.nextUrl.searchParams.get('category');
   const tier = request.nextUrl.searchParams.get('tier');
+  const network = request.nextUrl.searchParams.get('network');
+  const hasEmail = request.nextUrl.searchParams.get('has_email');
+  const limitParam = request.nextUrl.searchParams.get('limit');
+  const maxRows = limitParam ? parseInt(limitParam, 10) : null;
 
   if (type === 'publishers') {
     // Paginate through all records to bypass Supabase's 1000-row default limit
@@ -33,11 +37,12 @@ export async function GET(request: NextRequest) {
     let hasMore = true;
 
     while (hasMore) {
+      const batchSize = maxRows ? Math.min(pageSize, maxRows - allRows.length) : pageSize;
       let query = supabase
         .from('publishers')
         .select('id, publisher_name, domain, website, category, affiliate_type, tier_priority, affiliate_network, estimated_monthly_visits, historical_gmv, contact_email, contact_name, social_linkedin, onboarding_priority, countries, description, summary_note, enrichment_status')
         .order('id', { ascending: true })
-        .range(offset, offset + pageSize - 1);
+        .range(offset, offset + batchSize - 1);
 
       if (search) {
         query = query.or(`publisher_name.ilike.%${search}%,domain.ilike.%${search}%,category.ilike.%${search}%`);
@@ -47,6 +52,12 @@ export async function GET(request: NextRequest) {
       }
       if (tier) {
         query = query.eq('tier_priority', tier);
+      }
+      if (network) {
+        query = query.ilike('affiliate_network', `%${network}%`);
+      }
+      if (hasEmail === 'true') {
+        query = query.not('contact_email', 'is', null);
       }
 
       const { data, error } = await query;
@@ -59,8 +70,8 @@ export async function GET(request: NextRequest) {
         hasMore = false;
       } else {
         allRows.push(...data);
-        offset += pageSize;
-        if (data.length < pageSize) {
+        offset += data.length;
+        if (data.length < batchSize || (maxRows && allRows.length >= maxRows)) {
           hasMore = false;
         }
       }
