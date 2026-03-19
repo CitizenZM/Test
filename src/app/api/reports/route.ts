@@ -1,44 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 
+const CSV_HEADERS = ['id', 'publisher_name', 'domain', 'category', 'tier_priority', 'affiliate_network', 'estimated_monthly_visits', 'historical_gmv', 'contact_email', 'contact_name', 'onboarding_priority', 'countries'];
+
+function toCsvRow(row: Record<string, unknown>, headers: string[]): string {
+  return headers.map((h) => {
+    const val = row[h];
+    if (val === null || val === undefined) return '';
+    const str = String(val);
+    return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str.replace(/"/g, '""')}"` : str;
+  }).join(',');
+}
+
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient();
   const type = request.nextUrl.searchParams.get('type') || 'publishers';
   const format = request.nextUrl.searchParams.get('format') || 'json';
+  const search = request.nextUrl.searchParams.get('search');
+  const category = request.nextUrl.searchParams.get('category');
+  const tier = request.nextUrl.searchParams.get('tier');
 
   if (type === 'publishers') {
-    const { data, error } = await supabase
-      .from('publishers')
-      .select('id, publisher_name, domain, category, tier_priority, affiliate_network, estimated_monthly_visits, historical_gmv, contact_email, contact_name, onboarding_priority, countries')
-      .order('priority_rank', { ascending: true, nullsFirst: false });
+    // Paginate through all records to bypass Supabase's 1000-row default limit
+    const allRows: Record<string, unknown>[] = [];
+    const pageSize = 1000;
+    let offset = 0;
+    let hasMore = true;
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    while (hasMore) {
+      let query = supabase
+        .from('publishers')
+        .select('id, publisher_name, domain, category, tier_priority, affiliate_network, estimated_monthly_visits, historical_gmv, contact_email, contact_name, onboarding_priority, countries')
+        .order('id', { ascending: true })
+        .range(offset, offset + pageSize - 1);
+
+      if (search) {
+        query = query.or(`publisher_name.ilike.%${search}%,domain.ilike.%${search}%,category.ilike.%${search}%`);
+      }
+      if (category) {
+        query = query.eq('category', category);
+      }
+      if (tier) {
+        query = query.eq('tier_priority', tier);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      if (!data || data.length === 0) {
+        hasMore = false;
+      } else {
+        allRows.push(...data);
+        offset += pageSize;
+        if (data.length < pageSize) {
+          hasMore = false;
+        }
+      }
     }
 
     if (format === 'csv') {
-      const headers = ['id', 'publisher_name', 'domain', 'category', 'tier_priority', 'affiliate_network', 'estimated_monthly_visits', 'historical_gmv', 'contact_email', 'contact_name', 'onboarding_priority', 'countries'];
       const csv = [
-        headers.join(','),
-        ...(data || []).map((row: Record<string, unknown>) =>
-          headers.map((h) => {
-            const val = row[h];
-            if (val === null || val === undefined) return '';
-            const str = String(val);
-            return str.includes(',') || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
-          }).join(',')
-        ),
+        CSV_HEADERS.join(','),
+        ...allRows.map((row) => toCsvRow(row, CSV_HEADERS)),
       ].join('\n');
 
       return new NextResponse(csv, {
         headers: {
           'Content-Type': 'text/csv',
-          'Content-Disposition': 'attachment; filename=publishers_export.csv',
+          'Content-Disposition': `attachment; filename=publishers_export_${new Date().toISOString().split('T')[0]}.csv`,
         },
       });
     }
 
-    return NextResponse.json(data || []);
+    return NextResponse.json(allRows);
   }
 
   if (type === 'outreach') {

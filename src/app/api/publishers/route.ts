@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from('publishers')
     .select('*', { count: 'exact' })
-    .order('priority_rank', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   if (category) {
@@ -42,7 +41,9 @@ export async function GET(request: NextRequest) {
   const { data, error, count } = await query;
 
   if (error) {
-    return NextResponse.json({ publishers: [], total: 0 }, { status: 200 });
+    // Return error details for debugging
+    console.error('Publishers query error:', error.message);
+    return NextResponse.json({ publishers: [], total: 0, error: error.message }, { status: 200 });
   }
 
   return NextResponse.json({

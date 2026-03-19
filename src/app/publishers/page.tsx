@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { PublisherTable } from '@/components/publishers/publisher-table';
 import { Badge } from '@/components/ui/badge';
-import { Publisher, PUBLISHER_CATEGORIES, TIER_PRIORITIES, AFFILIATE_NETWORKS, TCL_PRESETS, LEVOIT_PRESETS, DiscoveryPreset } from '@/types';
-import { Search, Sparkles, Loader2, ChevronLeft, ChevronRight, Filter, Tv, Wind } from 'lucide-react';
+import { Publisher, PUBLISHER_CATEGORIES, TIER_PRIORITIES, AFFILIATE_NETWORKS, TCL_PRESETS, LEVOIT_PRESETS, INSTA360_PRESETS, DiscoveryPreset } from '@/types';
+import { Search, Sparkles, Loader2, ChevronLeft, ChevronRight, Filter, Tv, Wind, Camera, Download } from 'lucide-react';
 
 const categoryOptions = [
   { value: '', label: 'All Categories' },
@@ -114,6 +114,13 @@ export default function PublishersPage() {
       <Header
         title="Publisher Finder"
         description={`Discover affiliate publishers from ${totalCount.toLocaleString()} records`}
+        actions={
+          <a href="/api/reports?type=publishers&format=csv" download="publishers_export.csv">
+            <Button variant="outline">
+              <Download className="mr-2 h-4 w-4" /> Export CSV
+            </Button>
+          </a>
+        }
       />
 
       <div className="p-8 space-y-6">
@@ -166,12 +173,31 @@ export default function PublishersPage() {
                   ))}
                 </div>
               </div>
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Camera className="h-4 w-4 text-amber-600" />
+                  <span className="text-xs font-semibold text-gray-700">Insta360 Presets</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {INSTA360_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.id}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDiscover(preset)}
+                      disabled={discovering}
+                    >
+                      {preset.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <Input
-              placeholder="e.g. TV reviews, air purifier blog"
+              placeholder="e.g. action camera, 360 camera review"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}

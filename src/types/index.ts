@@ -257,6 +257,15 @@ export const LEVOIT_PRESETS: DiscoveryPreset[] = [
   { id: 'levoit-deals', name: 'Home Deals Sites', brand: 'Levoit', keyword: 'home deals discounts appliance coupons Amazon Prime', category: 'Deal Sites', description: 'Home and appliance deal aggregators', icon: 'Tag' },
 ];
 
+export const INSTA360_PRESETS: DiscoveryPreset[] = [
+  { id: 'insta360-action', name: 'Action Camera Reviewers', brand: 'Insta360', keyword: 'best action camera 360 camera review GoPro alternative', category: 'Tech Editorial / Reviews', description: 'Publishers reviewing action cameras, 360 cameras, and adventure tech', icon: 'Camera' },
+  { id: 'insta360-creator', name: 'Content Creator Sites', brand: 'Insta360', keyword: 'content creator camera gear vlog equipment YouTube', category: 'Social Creator - General', description: 'Content creator and vlogger tech review publishers', icon: 'Video' },
+  { id: 'insta360-travel', name: 'Travel & Adventure Blogs', brand: 'Insta360', keyword: 'travel photography adventure camera outdoor vlog', category: 'Lifestyle / Travel', description: 'Travel and adventure content publishers interested in cameras', icon: 'Map' },
+  { id: 'insta360-tech', name: 'Tech Editorial Sites', brand: 'Insta360', keyword: 'tech review gadget consumer electronics camera', category: 'Tech Editorial / Reviews', description: 'General tech review sites covering cameras and gadgets', icon: 'Laptop' },
+  { id: 'insta360-photo', name: 'Photography Publications', brand: 'Insta360', keyword: 'photography camera review mirrorless 360 photography', category: 'Tech Editorial / Reviews', description: 'Photography-focused publications and review sites', icon: 'Image' },
+  { id: 'insta360-deals', name: 'Camera & Tech Deals', brand: 'Insta360', keyword: 'camera deals tech discounts electronics coupon', category: 'Deal Sites', description: 'Deal sites and coupon publishers covering camera gear', icon: 'Tag' },
+];
+
 // ============================================================
 // Pipeline stages
 // ============================================================
