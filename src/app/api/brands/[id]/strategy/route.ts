@@ -23,29 +23,38 @@ export async function POST(
     ? brand.brand_profiles[0]
     : brand.brand_profiles;
 
-  const competitors = profile?.competitors || [];
+  // Extract competitors from value_props_json pack
+  const vp = profile?.value_props_json;
+  const competitors =
+    vp && typeof vp === 'object' && '__competitors' in vp
+      ? (vp as Record<string, unknown>).__competitors
+      : profile?.competitors || [];
 
   const strategy = await generateRecruitmentStrategy({
     brand_name: brand.brand_name,
     brand_url: brand.primary_domain || '',
     category: brand.category || '',
-    competitors,
+    competitors: Array.isArray(competitors) ? competitors : [],
   });
+
+  const now = new Date().toISOString();
+
+  // Store strategy in value_props_json (works without migration)
+  const packed = {
+    __competitors: Array.isArray(competitors) ? competitors : [],
+    __recruitment_strategy: strategy,
+    __strategy_generated_at: now,
+  };
 
   if (profile?.id) {
     await supabase
       .from('brand_profiles')
-      .update({
-        recruitment_strategy: strategy,
-        strategy_generated_at: new Date().toISOString(),
-      })
+      .update({ value_props_json: packed })
       .eq('id', profile.id);
   } else {
     await supabase.from('brand_profiles').insert({
       brand_id: id,
-      recruitment_strategy: strategy,
-      strategy_generated_at: new Date().toISOString(),
-      competitors,
+      value_props_json: packed,
     });
   }
 

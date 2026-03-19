@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function unpackProfile(profile: any) {
+  if (!profile) return profile;
+  const vp = profile.value_props_json;
+  if (vp && typeof vp === 'object' && '__competitors' in vp) {
+    profile.competitors = vp.__competitors || [];
+    profile.recruitment_strategy = vp.__recruitment_strategy || null;
+    profile.strategy_generated_at = vp.__strategy_generated_at || null;
+  }
+  return profile;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function unpackBrand(brand: any) {
+  if (!brand) return brand;
+  if (Array.isArray(brand.brand_profiles)) {
+    brand.brand_profiles = brand.brand_profiles.map(unpackProfile);
+  } else if (brand.brand_profiles) {
+    brand.brand_profiles = unpackProfile(brand.brand_profiles);
+  }
+  return brand;
+}
+
 export async function GET() {
   const supabase = createServiceClient();
 
@@ -13,7 +36,8 @@ export async function GET() {
     return NextResponse.json([]);
   }
 
-  return NextResponse.json(data || []);
+  const brands = (data || []).map(unpackBrand);
+  return NextResponse.json(brands);
 }
 
 export async function POST(request: NextRequest) {
@@ -40,9 +64,14 @@ export async function POST(request: NextRequest) {
   }
 
   if (body.competitors && body.competitors.length > 0) {
+    const packed = {
+      __competitors: body.competitors,
+      __recruitment_strategy: null,
+      __strategy_generated_at: null,
+    };
     await supabase.from('brand_profiles').insert({
       brand_id: brand.id,
-      competitors: body.competitors,
+      value_props_json: packed,
     });
   }
 
@@ -52,5 +81,5 @@ export async function POST(request: NextRequest) {
     .eq('id', brand.id)
     .single();
 
-  return NextResponse.json(data, { status: 201 });
+  return NextResponse.json(unpackBrand(data), { status: 201 });
 }
