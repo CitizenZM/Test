@@ -30,6 +30,9 @@ import {
   TrendingUp,
   Search,
   RefreshCw,
+  Users,
+  MessageSquare,
+  DollarSign,
 } from 'lucide-react';
 
 const categoryOptions = BRAND_CATEGORIES.map((c) => ({ value: c, label: c }));
@@ -161,6 +164,7 @@ export default function BrandDetailPage() {
   function buildPublisherFinderUrl() {
     if (!strategy) return '/publishers';
     const params = new URLSearchParams();
+    params.set('brand_id', brandId);
     if (strategy.discovery_keywords.length > 0) {
       params.set('keyword', strategy.discovery_keywords[0]);
     }
@@ -393,6 +397,51 @@ export default function BrandDetailPage() {
                     ))}
                   </div>
                 </Card>
+
+                {/* Publisher Strategy */}
+                {strategy.publisher_strategy && (
+                  <Card>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Users className="h-5 w-5 text-indigo-600" />
+                      <CardTitle>Publisher Strategy</CardTitle>
+                    </div>
+                    <div className="rounded-lg bg-indigo-50 p-4">
+                      <p className="text-sm text-indigo-800 whitespace-pre-line">
+                        {strategy.publisher_strategy}
+                      </p>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Recruitment Approach */}
+                {strategy.recruitment_approach && (
+                  <Card>
+                    <div className="flex items-center gap-2 mb-3">
+                      <MessageSquare className="h-5 w-5 text-purple-600" />
+                      <CardTitle>Recruitment Approach</CardTitle>
+                    </div>
+                    <div className="rounded-lg bg-purple-50 p-4">
+                      <p className="text-sm text-purple-800 whitespace-pre-line">
+                        {strategy.recruitment_approach}
+                      </p>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Commission Strategy */}
+                {strategy.commission_strategy && (
+                  <Card>
+                    <div className="flex items-center gap-2 mb-3">
+                      <DollarSign className="h-5 w-5 text-emerald-600" />
+                      <CardTitle>Commission Strategy</CardTitle>
+                    </div>
+                    <div className="rounded-lg bg-emerald-50 p-4">
+                      <p className="text-sm text-emerald-800 whitespace-pre-line">
+                        {strategy.commission_strategy}
+                      </p>
+                    </div>
+                  </Card>
+                )}
 
                 {/* Ideal Publisher Attributes */}
                 <Card>

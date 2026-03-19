@@ -1,14 +1,38 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { PublisherTable } from '@/components/publishers/publisher-table';
 import { Badge } from '@/components/ui/badge';
-import { Publisher, PUBLISHER_CATEGORIES, TIER_PRIORITIES, AFFILIATE_NETWORKS, TCL_PRESETS, LEVOIT_PRESETS, INSTA360_PRESETS, DiscoveryPreset } from '@/types';
-import { Search, Sparkles, Loader2, ChevronLeft, ChevronRight, Filter, Tv, Wind, Camera, Download } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Publisher,
+  PUBLISHER_CATEGORIES,
+  TIER_PRIORITIES,
+  AFFILIATE_NETWORKS,
+  type BrandWithProfile,
+  type BrandProfile,
+  type RecruitmentStrategy,
+} from '@/types';
+import {
+  Search,
+  Sparkles,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Download,
+  Building2,
+  Target,
+  Users,
+  ArrowRight,
+  X,
+} from 'lucide-react';
 
 const categoryOptions = [
   { value: '', label: 'All Categories' },
@@ -28,6 +52,20 @@ const networkOptions = [
 const PAGE_SIZE = 50;
 
 export default function PublishersPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    }>
+      <PublishersPageInner />
+    </Suspense>
+  );
+}
+
+function PublishersPageInner() {
+  const searchParams = useSearchParams();
+
   const [publishers, setPublishers] = useState<Publisher[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
@@ -40,7 +78,95 @@ export default function PublishersPage() {
   const [loading, setLoading] = useState(false);
   const [discovering, setDiscovering] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [showPresets, setShowPresets] = useState(false);
+
+  // Brand profile integration
+  const [brands, setBrands] = useState<BrandWithProfile[]>([]);
+  const [selectedBrandId, setSelectedBrandId] = useState('');
+  const [activeStrategy, setActiveStrategy] = useState<RecruitmentStrategy | null>(null);
+  const [showStrategyPanel, setShowStrategyPanel] = useState(false);
+
+  // Fetch brands on mount
+  useEffect(() => {
+    fetch('/api/brands')
+      .then((res) => res.json())
+      .then((data: BrandWithProfile[]) => {
+        if (Array.isArray(data)) setBrands(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Handle URL params (brand_id from "Apply to Publisher Finder" button)
+  useEffect(() => {
+    if (brands.length === 0) return;
+    const brandIdParam = searchParams.get('brand_id');
+    if (brandIdParam && !selectedBrandId) {
+      applyBrandSelection(brandIdParam);
+    }
+  }, [brands, searchParams]);
+
+  const getSelectedBrand = useCallback(() => {
+    return brands.find((b) => b.id === selectedBrandId);
+  }, [brands, selectedBrandId]);
+
+  function getProfileStrategy(brand: BrandWithProfile): RecruitmentStrategy | null {
+    const profile: BrandProfile | undefined = Array.isArray(brand.brand_profiles)
+      ? brand.brand_profiles[0]
+      : brand.brand_profiles || undefined;
+    return profile?.recruitment_strategy || null;
+  }
+
+  function applyBrandSelection(brandId: string) {
+    setSelectedBrandId(brandId);
+
+    const brand = brands.find((b) => b.id === brandId);
+    if (!brand) return;
+
+    const strategy = getProfileStrategy(brand);
+    if (!strategy) {
+      setActiveStrategy(null);
+      return;
+    }
+
+    setActiveStrategy(strategy);
+    setShowStrategyPanel(true);
+
+    // Auto-fill filters from strategy
+    if (strategy.target_categories.length > 0) {
+      setCategory(strategy.target_categories[0]);
+    }
+    if (strategy.ideal_publisher_attributes.tier_priorities.length > 0) {
+      setTier(strategy.ideal_publisher_attributes.tier_priorities[0]);
+    }
+    if (strategy.ideal_publisher_attributes.affiliate_networks.length > 0) {
+      setNetwork(strategy.ideal_publisher_attributes.affiliate_networks[0]);
+    }
+    if (strategy.discovery_keywords.length > 0) {
+      setKeyword(strategy.discovery_keywords[0]);
+      setSearchQuery(strategy.discovery_keywords[0]);
+    }
+    setPage(0);
+  }
+
+  function handleBrandSelect(e: React.ChangeEvent<HTMLSelectElement>) {
+    const brandId = e.target.value;
+    if (!brandId) {
+      clearBrandSelection();
+      return;
+    }
+    applyBrandSelection(brandId);
+  }
+
+  function clearBrandSelection() {
+    setSelectedBrandId('');
+    setActiveStrategy(null);
+    setShowStrategyPanel(false);
+    setCategory('');
+    setTier('');
+    setNetwork('');
+    setKeyword('');
+    setSearchQuery('');
+    setPage(0);
+  }
 
   useEffect(() => {
     fetchPublishers();
@@ -75,20 +201,21 @@ export default function PublishersPage() {
     }
   }
 
-  async function handleDiscover(preset?: DiscoveryPreset) {
-    const searchKeyword = preset ? preset.keyword : keyword;
-    const searchCategory = preset ? preset.category : category;
+  async function handleDiscover() {
+    const searchKeyword = keyword;
     if (!searchKeyword.trim()) return;
     setDiscovering(true);
     try {
+      const selectedBrand = getSelectedBrand();
       const res = await fetch('/api/publishers/discover', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           keyword: searchKeyword,
-          category: searchCategory,
-          product: preset?.name || '',
-          brand: preset?.brand || '',
+          category: category,
+          product: '',
+          brand: selectedBrand?.brand_name || '',
+          strategy: activeStrategy || undefined,
         }),
       });
       if (res.ok) {
@@ -108,6 +235,8 @@ export default function PublishersPage() {
   }
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const selectedBrand = getSelectedBrand();
+  const brandHasNoStrategy = selectedBrandId && !activeStrategy;
 
   return (
     <>
@@ -124,76 +253,177 @@ export default function PublishersPage() {
       />
 
       <div className="p-8 space-y-6">
-        {/* AI Discovery Section */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">AI Publisher Discovery</h3>
-            <Button variant="outline" size="sm" onClick={() => setShowPresets(!showPresets)}>
-              {showPresets ? 'Hide' : 'Show'} Presets
-            </Button>
+        {/* Brand Profile Selector */}
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2 shrink-0">
+              <Building2 className="h-5 w-5 text-indigo-600" />
+              <span className="text-sm font-semibold text-indigo-900">Brand Profile</span>
+            </div>
+            <div className="flex-1 min-w-[200px] max-w-xs">
+              <Select
+                id="brand-select"
+                value={selectedBrandId}
+                onChange={handleBrandSelect}
+                options={[
+                  { value: '', label: 'Select a brand...' },
+                  ...brands
+                    .filter((b) => getProfileStrategy(b))
+                    .map((b) => ({ value: b.id, label: `${b.brand_name} (Strategy Ready)` })),
+                  ...brands
+                    .filter((b) => !getProfileStrategy(b))
+                    .map((b) => ({ value: b.id, label: b.brand_name })),
+                ]}
+              />
+            </div>
+            {activeStrategy && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowStrategyPanel(!showStrategyPanel)}
+              >
+                {showStrategyPanel ? 'Hide' : 'Show'} Strategy
+              </Button>
+            )}
+            {selectedBrandId && (
+              <Button variant="ghost" size="sm" onClick={clearBrandSelection}>
+                <X className="h-4 w-4 mr-1" /> Clear
+              </Button>
+            )}
+            {activeStrategy && (
+              <div className="flex items-center gap-2 ml-auto">
+                <Badge variant="success">Strategy Applied</Badge>
+                <span className="text-xs text-gray-500">
+                  Filters auto-set from {selectedBrand?.brand_name} strategy
+                </span>
+              </div>
+            )}
           </div>
 
-          {showPresets && (
-            <div className="mb-4 space-y-3">
+          {/* No strategy warning */}
+          {brandHasNoStrategy && (
+            <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 p-3 flex items-center gap-3">
+              <span className="text-sm text-amber-800">
+                No strategy generated for this brand yet.
+              </span>
+              <Link href={`/brands/${selectedBrandId}`}>
+                <Button size="sm" variant="outline">
+                  Generate Strategy <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Strategy Summary Panel */}
+        {showStrategyPanel && activeStrategy && (
+          <div className="rounded-xl border border-indigo-100 bg-white p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <Target className="h-4 w-4 text-indigo-600" />
+                Strategy Summary for {selectedBrand?.brand_name}
+              </h4>
+              <Link href={`/brands/${selectedBrandId}`}>
+                <Button variant="ghost" size="sm">View Full Strategy</Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Tv className="h-4 w-4 text-blue-600" />
-                  <span className="text-xs font-semibold text-gray-700">TCL Presets</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {TCL_PRESETS.map((preset) => (
-                    <Button
-                      key={preset.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDiscover(preset)}
-                      disabled={discovering}
+                <p className="text-xs font-medium text-gray-500 mb-1.5">Target Categories</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeStrategy.target_categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => { setCategory(cat); setPage(0); }}
+                      className={cn(
+                        'text-xs px-2.5 py-1 rounded-full border transition-colors',
+                        category === cat
+                          ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                          : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                      )}
                     >
-                      {preset.name}
-                    </Button>
+                      {cat}
+                    </button>
                   ))}
                 </div>
               </div>
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Wind className="h-4 w-4 text-teal-600" />
-                  <span className="text-xs font-semibold text-gray-700">Levoit Presets</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {LEVOIT_PRESETS.map((preset) => (
-                    <Button
-                      key={preset.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDiscover(preset)}
-                      disabled={discovering}
+                <p className="text-xs font-medium text-gray-500 mb-1.5">Discovery Keywords</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeStrategy.discovery_keywords.map((kw) => (
+                    <button
+                      key={kw}
+                      onClick={() => { setKeyword(kw); setSearchQuery(kw); setPage(0); }}
+                      className={cn(
+                        'text-xs px-2.5 py-1 rounded-full border transition-colors',
+                        keyword === kw
+                          ? 'bg-purple-100 border-purple-300 text-purple-700'
+                          : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                      )}
                     >
-                      {preset.name}
-                    </Button>
+                      {kw}
+                    </button>
                   ))}
                 </div>
               </div>
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Camera className="h-4 w-4 text-amber-600" />
-                  <span className="text-xs font-semibold text-gray-700">Insta360 Presets</span>
+                <p className="text-xs font-medium text-gray-500 mb-1.5">Publisher Tags</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeStrategy.target_publisher_tags.map((tag) => (
+                    <Badge key={tag} variant="default">{tag}</Badge>
+                  ))}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {INSTA360_PRESETS.map((preset) => (
-                    <Button
-                      key={preset.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDiscover(preset)}
-                      disabled={discovering}
-                    >
-                      {preset.name}
-                    </Button>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1.5">Ideal Attributes</p>
+                <div className="flex flex-wrap gap-1.5 text-xs text-gray-600">
+                  <Badge variant="info">
+                    Min. {activeStrategy.ideal_publisher_attributes.min_traffic.toLocaleString()} visits/mo
+                  </Badge>
+                  {activeStrategy.ideal_publisher_attributes.countries.map((c) => (
+                    <Badge key={c} variant="default">{c}</Badge>
                   ))}
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Publisher Strategy (from enhanced AI) */}
+            {activeStrategy.publisher_strategy && (
+              <div className="border-t border-gray-100 pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-indigo-600" />
+                  <p className="text-xs font-medium text-gray-500">Publisher Strategy</p>
+                </div>
+                <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-4">
+                  {activeStrategy.publisher_strategy}
+                </p>
+              </div>
+            )}
+
+            {/* Active Filters Summary */}
+            <div className="border-t border-gray-100 pt-3 flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-400">Active filters:</span>
+              {category && <Badge variant="info">{category}</Badge>}
+              {tier && <Badge variant="purple">{tier}</Badge>}
+              {network && <Badge variant="success">{network}</Badge>}
+              {keyword && <Badge variant="default">{keyword}</Badge>}
+            </div>
+          </div>
+        )}
+
+        {/* AI Discovery Section */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-gray-900">
+              AI Publisher Discovery
+              {selectedBrand && activeStrategy && (
+                <span className="ml-2 text-xs font-normal text-indigo-600">
+                  powered by {selectedBrand.brand_name} strategy
+                </span>
+              )}
+            </h3>
+          </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <Input
@@ -231,6 +461,27 @@ export default function PublishersPage() {
               </Button>
             </div>
           </div>
+
+          {/* Quick keyword/category chips when strategy is active */}
+          {activeStrategy && activeStrategy.discovery_keywords.length > 1 && (
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-400">Quick keywords:</span>
+              {activeStrategy.discovery_keywords.map((kw) => (
+                <button
+                  key={kw}
+                  onClick={() => { setKeyword(kw); setSearchQuery(kw); setPage(0); }}
+                  className={cn(
+                    'text-xs px-2 py-0.5 rounded-full border transition-colors',
+                    keyword === kw
+                      ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                      : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                  )}
+                >
+                  {kw}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Advanced Filters */}

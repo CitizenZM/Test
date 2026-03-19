@@ -104,6 +104,10 @@ export interface RecruitmentStrategy {
   competitive_insights: string;
   outreach_angle: string;
   ai_confidence: number;
+  // Comprehensive strategy sections
+  publisher_strategy?: string;
+  recruitment_approach?: string;
+  commission_strategy?: string;
 }
 
 // ============================================================

@@ -5,13 +5,13 @@ import { discoverPublishers } from '@/lib/ai/research-agent';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { keyword, category, product, brand } = body;
+    const { keyword, category, product, brand, strategy } = body;
 
     if (!keyword) {
       return NextResponse.json({ error: 'Keyword is required' }, { status: 400 });
     }
 
-    const publishers = await discoverPublishers({ keyword, category, product, brand });
+    const publishers = await discoverPublishers({ keyword, category, product, brand, strategy });
 
     if (publishers.length === 0) {
       return NextResponse.json([]);
