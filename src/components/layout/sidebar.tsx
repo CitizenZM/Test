@@ -18,6 +18,7 @@ import { MANAGED_BRANDS } from '@/types';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Brand Profiles', href: '/brands', icon: Building2 },
   { name: 'Publisher Finder', href: '/publishers', icon: Search },
   { name: 'AI Outreach', href: '/outreach', icon: Mail },
   { name: 'Campaigns', href: '/campaigns', icon: Megaphone },

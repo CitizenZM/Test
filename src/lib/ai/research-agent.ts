@@ -1,10 +1,12 @@
 import { getAnthropicClient } from './client';
+import type { RecruitmentStrategy } from '@/types';
 
 interface DiscoverParams {
   keyword: string;
   category?: string;
   product?: string;
   brand?: string;
+  strategy?: RecruitmentStrategy;
 }
 
 interface DiscoveredPublisher {
@@ -25,12 +27,23 @@ export async function discoverPublishers(params: DiscoverParams): Promise<Discov
     ? `\nBrand context: Finding publishers for ${params.brand} affiliate program.`
     : '';
 
+  const strategyContext = params.strategy
+    ? `\n\nAI Recruitment Strategy Context:
+- Target categories: ${params.strategy.target_categories.join(', ')}
+- Target publisher tags: ${params.strategy.target_publisher_tags.join(', ')}
+- Ideal content types: ${params.strategy.ideal_publisher_attributes.content_types.join(', ')}
+- Target countries: ${params.strategy.ideal_publisher_attributes.countries.join(', ')}
+- Min monthly traffic: ${params.strategy.ideal_publisher_attributes.min_traffic.toLocaleString()}
+- Audience fit: ${params.strategy.audience_fit_notes}
+Prioritize publishers matching this strategy profile.`
+    : '';
+
   const prompt = `You are an expert affiliate marketing researcher. Find publishers, blogs, media sites, and content creators that would be great affiliate partners.
 
 Search criteria:
 - Keyword: ${params.keyword}
 ${params.category ? `- Category: ${params.category}` : ''}
-${params.product ? `- Product focus: ${params.product}` : ''}${brandContext}
+${params.product ? `- Product focus: ${params.product}` : ''}${brandContext}${strategyContext}
 
 Return exactly 10 publisher recommendations as a JSON array. Each publisher should have:
 - publisher_name: Publisher/site name

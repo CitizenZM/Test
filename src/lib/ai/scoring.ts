@@ -1,4 +1,5 @@
 import { getAnthropicClient } from './client';
+import type { RecruitmentStrategy } from '@/types';
 
 interface ScoreResult {
   publisher_score: number;
@@ -7,13 +8,31 @@ interface ScoreResult {
   analysis: string;
 }
 
-export async function analyzePublisher(name: string, website: string): Promise<ScoreResult> {
+interface ScoreOptions {
+  brandName?: string;
+  strategy?: RecruitmentStrategy;
+}
+
+export async function analyzePublisher(
+  name: string,
+  website: string,
+  options?: ScoreOptions
+): Promise<ScoreResult> {
   const client = getAnthropicClient();
+
+  const brandContext =
+    options?.strategy && options?.brandName
+      ? `\n\nBrand context: Scoring for ${options.brandName}'s affiliate program.
+Target publisher categories: ${options.strategy.target_categories.join(', ')}
+Ideal content types: ${options.strategy.ideal_publisher_attributes.content_types.join(', ')}
+Audience fit notes: ${options.strategy.audience_fit_notes}
+Score affiliate_fit_score higher if the publisher matches these target criteria.`
+      : '';
 
   const prompt = `You are an expert affiliate marketing analyst. Analyze this publisher for affiliate partnership potential.
 
 Publisher: ${name}
-Website: ${website}
+Website: ${website}${brandContext}
 
 Score the publisher on three dimensions (0-100 each):
 1. publisher_score: Overall quality and reputation
