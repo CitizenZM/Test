@@ -1,13 +1,35 @@
 'use client';
 
-import { Publisher, formatTraffic, formatGmv, getTierColor, getPriorityColor } from '@/types';
+import { Publisher, formatTraffic, formatGmv, getTierColor } from '@/types';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Mail, Linkedin, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 interface PublisherTableProps {
   publishers: Publisher[];
+}
+
+function CopyEmailButton({ email }: { email: string }) {
+  const [copied, setCopied] = useState(false);
+  function handleCopy(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(email).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+  return (
+    <button
+      onClick={handleCopy}
+      className="ml-1 rounded p-0.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+      title="Copy email"
+    >
+      {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+    </button>
+  );
 }
 
 export function PublisherTable({ publishers }: PublisherTableProps) {
@@ -30,7 +52,7 @@ export function PublisherTable({ publishers }: PublisherTableProps) {
           <TableHead>Traffic</TableHead>
           <TableHead>GMV</TableHead>
           <TableHead>Network</TableHead>
-          <TableHead>Contact</TableHead>
+          <TableHead>Contact Email</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -49,7 +71,9 @@ export function PublisherTable({ publishers }: PublisherTableProps) {
               </Link>
             </TableCell>
             <TableCell>
-              {pub.category && <Badge>{pub.category}</Badge>}
+              {pub.category && (
+                <Badge className="text-xs whitespace-nowrap">{pub.category}</Badge>
+              )}
             </TableCell>
             <TableCell>
               {pub.tier_priority && (
@@ -59,22 +83,53 @@ export function PublisherTable({ publishers }: PublisherTableProps) {
               )}
             </TableCell>
             <TableCell>
-              <span className="font-medium">{formatTraffic(pub.estimated_monthly_visits)}</span>
+              <span className="font-medium tabular-nums">{formatTraffic(pub.estimated_monthly_visits)}</span>
             </TableCell>
             <TableCell>
-              <span className="font-medium">{formatGmv(pub.historical_gmv)}</span>
+              <span className="font-medium tabular-nums">{formatGmv(pub.historical_gmv)}</span>
             </TableCell>
             <TableCell>
               {pub.affiliate_network ? (
-                <Badge variant="success">{pub.affiliate_network}</Badge>
+                <Badge variant="success" className="text-xs">{pub.affiliate_network}</Badge>
               ) : (
                 <span className="text-gray-400">-</span>
               )}
             </TableCell>
             <TableCell>
-              <div className="flex gap-2">
-                {pub.contact_email && <Badge variant="info">Email</Badge>}
-                {pub.social_linkedin && <Badge variant="purple">LinkedIn</Badge>}
+              <div className="flex flex-col gap-1">
+                {pub.contact_name && (
+                  <p className="text-xs font-medium text-gray-700">{pub.contact_name}</p>
+                )}
+                {pub.contact_email ? (
+                  <div className="flex items-center gap-1">
+                    <Mail className="h-3 w-3 text-indigo-500 shrink-0" />
+                    <a
+                      href={`mailto:${pub.contact_email}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs text-indigo-600 hover:underline truncate max-w-[160px]"
+                      title={pub.contact_email}
+                    >
+                      {pub.contact_email}
+                    </a>
+                    <CopyEmailButton email={pub.contact_email} />
+                  </div>
+                ) : (
+                  <span className="text-xs text-gray-400">No email</span>
+                )}
+                {pub.social_linkedin && (
+                  <div className="flex items-center gap-1">
+                    <Linkedin className="h-3 w-3 text-blue-500 shrink-0" />
+                    <a
+                      href={pub.social_linkedin.startsWith('http') ? pub.social_linkedin : `https://linkedin.com/in/${pub.social_linkedin}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      LinkedIn
+                    </a>
+                  </div>
+                )}
               </div>
             </TableCell>
           </TableRow>

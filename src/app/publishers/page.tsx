@@ -77,6 +77,8 @@ function PublishersPageInner() {
   const [hasEmail, setHasEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [discovering, setDiscovering] = useState(false);
+  const [bulkDiscovering, setBulkDiscovering] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; found: number } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   // Brand profile integration
@@ -229,6 +231,34 @@ function PublishersPageInner() {
     }
   }
 
+  async function handleBulkDiscover() {
+    if (!activeStrategy || !selectedBrand) return;
+    setBulkDiscovering(true);
+    setBulkProgress({ current: 0, total: 15, found: 0 });
+    try {
+      const res = await fetch('/api/publishers/bulk-discover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keywords: activeStrategy.discovery_keywords,
+          categories: activeStrategy.target_categories,
+          brand: selectedBrand.brand_name,
+          strategy: activeStrategy,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBulkProgress({ current: data.tasks_run, total: data.tasks_run, found: data.total_saved });
+        await fetchPublishers();
+      }
+    } catch {
+      // Handle error
+    } finally {
+      setBulkDiscovering(false);
+      setTimeout(() => setBulkProgress(null), 4000);
+    }
+  }
+
   function handleSearch() {
     setPage(0);
     setSearchQuery(keyword);
@@ -283,6 +313,20 @@ function PublishersPageInner() {
                 onClick={() => setShowStrategyPanel(!showStrategyPanel)}
               >
                 {showStrategyPanel ? 'Hide' : 'Show'} Strategy
+              </Button>
+            )}
+            {activeStrategy && selectedBrand && (
+              <Button
+                size="sm"
+                onClick={handleBulkDiscover}
+                disabled={bulkDiscovering}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                {bulkDiscovering ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Discovering...</>
+                ) : (
+                  <><Sparkles className="mr-2 h-4 w-4" /> Discover 200+ Publishers for {selectedBrand.brand_name}</>
+                )}
               </Button>
             )}
             {selectedBrandId && (
@@ -530,6 +574,17 @@ function PublishersPageInner() {
                 { value: 'false', label: 'No' },
               ]}
             />
+          </div>
+        )}
+
+        {bulkProgress && (
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 flex items-center gap-3">
+            <Loader2 className={cn('h-5 w-5 text-indigo-600', bulkDiscovering && 'animate-spin')} />
+            <span className="text-sm font-medium text-indigo-800">
+              {bulkDiscovering
+                ? `Discovering publishers... ${bulkProgress.current}/${bulkProgress.total} keywords searched, ${bulkProgress.found} publishers found`
+                : `Discovery complete — ${bulkProgress.found} publishers saved to database`}
+            </span>
           </div>
         )}
 

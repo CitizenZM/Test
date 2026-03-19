@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 
-const CSV_HEADERS = ['id', 'publisher_name', 'domain', 'category', 'tier_priority', 'affiliate_network', 'estimated_monthly_visits', 'historical_gmv', 'contact_email', 'contact_name', 'onboarding_priority', 'countries'];
+const CSV_HEADERS = [
+  'id', 'publisher_name', 'domain', 'website', 'category', 'affiliate_type',
+  'tier_priority', 'affiliate_network', 'estimated_monthly_visits', 'historical_gmv',
+  'contact_email', 'contact_name', 'social_linkedin',
+  'onboarding_priority', 'countries', 'description', 'summary_note', 'enrichment_status'
+];
 
 function toCsvRow(row: Record<string, unknown>, headers: string[]): string {
   return headers.map((h) => {
@@ -30,7 +35,7 @@ export async function GET(request: NextRequest) {
     while (hasMore) {
       let query = supabase
         .from('publishers')
-        .select('id, publisher_name, domain, category, tier_priority, affiliate_network, estimated_monthly_visits, historical_gmv, contact_email, contact_name, onboarding_priority, countries')
+        .select('id, publisher_name, domain, website, category, affiliate_type, tier_priority, affiliate_network, estimated_monthly_visits, historical_gmv, contact_email, contact_name, social_linkedin, onboarding_priority, countries, description, summary_note, enrichment_status')
         .order('id', { ascending: true })
         .range(offset, offset + pageSize - 1);
 

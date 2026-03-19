@@ -58,7 +58,7 @@ Return exactly 10 publisher recommendations as a JSON array. Each publisher shou
 Return ONLY the JSON array, no other text.`;
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-opus-4-6',
     max_tokens: 4096,
     messages: [{ role: 'user', content: prompt }],
   });
