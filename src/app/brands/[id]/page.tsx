@@ -158,8 +158,8 @@ export default function BrandDetailPage() {
       } else {
         const err = await res.json().catch(() => ({}));
         const msg = err.error || 'Strategy generation failed';
-        if (msg.includes('ANTHROPIC_API_KEY') || msg.includes('API key')) {
-          setGenerateError('AI not configured. Go to Settings to add your Anthropic API key.');
+        if (msg.includes('OPENAI_API_KEY') || msg.includes('API key')) {
+          setGenerateError('AI not configured. Go to Settings to add your OpenAI API key.');
         } else {
           setGenerateError(msg);
         }

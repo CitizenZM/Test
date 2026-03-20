@@ -13,7 +13,7 @@ export function SetupBanner() {
     fetch('/api/settings')
       .then(r => r.json())
       .then(data => {
-        if (!data.anthropic_configured) setShow(true);
+        if (!data.openai_configured && !data.anthropic_configured) setShow(true);
       })
       .catch(() => {});
   }, [dismissed]);
@@ -24,7 +24,7 @@ export function SetupBanner() {
     <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-3 text-sm">
       <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
       <span className="text-amber-800">
-        <strong>AI features not active.</strong> Add your Anthropic API key to enable strategy generation and publisher discovery.
+        <strong>AI features not active.</strong> Add your OpenAI API key to enable strategy generation and publisher discovery.
       </span>
       <Link
         href="/settings"

@@ -1,4 +1,4 @@
-import { getAnthropicClient } from './client';
+import { getOpenAIClient } from './client';
 import type { BrandCompetitor, RecruitmentStrategy } from '@/types';
 
 interface StrategyParams {
@@ -11,7 +11,7 @@ interface StrategyParams {
 export async function generateRecruitmentStrategy(
   params: StrategyParams
 ): Promise<RecruitmentStrategy> {
-  const client = getAnthropicClient();
+  const client = getOpenAIClient();
 
   const competitorList = params.competitors
     .map((c, i) => `${i + 1}. ${c.name} (${c.url})`)
@@ -79,14 +79,13 @@ Return ONLY a JSON object with this exact structure. For all text fields, provid
   "ai_confidence": <0-100>
 }`;
 
-  const response = await client.messages.create({
-    model: 'claude-opus-4-6',
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o',
     max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const text =
-    response.content[0].type === 'text' ? response.content[0].text : '{}';
+  const text = response.choices[0]?.message?.content || '{}';
 
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);

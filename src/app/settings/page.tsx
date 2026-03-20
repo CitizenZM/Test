@@ -14,10 +14,10 @@ import {
 } from 'lucide-react';
 
 export default function SettingsPage() {
-  // Anthropic key state
-  const [anthropicKey, setAnthropicKey] = useState('');
-  const [anthropicStatus, setAnthropicStatus] = useState<'unknown' | 'configured' | 'not_set'>('unknown');
-  const [anthropicPreview, setAnthropicPreview] = useState<string | null>(null);
+  // OpenAI key state
+  const [openaiKey, setOpenaiKey] = useState('');
+  const [openaiStatus, setOpenaiStatus] = useState<'unknown' | 'configured' | 'not_set'>('unknown');
+  const [openaiPreview, setOpenaiPreview] = useState<string | null>(null);
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ ok: boolean; message: string; deploying?: boolean } | null>(null);
@@ -35,10 +35,10 @@ export default function SettingsPage() {
     fetch('/api/settings')
       .then(r => r.json())
       .then(data => {
-        setAnthropicStatus(data.anthropic_configured ? 'configured' : 'not_set');
-        setAnthropicPreview(data.anthropic_key_preview || null);
+        setOpenaiStatus(data.openai_configured ? 'configured' : 'not_set');
+        setOpenaiPreview(data.openai_key_preview || null);
       })
-      .catch(() => setAnthropicStatus('not_set'));
+      .catch(() => setOpenaiStatus('not_set'));
   }, []);
 
   useEffect(() => {
@@ -63,22 +63,22 @@ export default function SettingsPage() {
     return () => clearInterval(interval);
   }, [deploying]);
 
-  async function handleSaveAnthropicKey() {
-    if (!anthropicKey.trim()) return;
+  async function handleSaveOpenaiKey() {
+    if (!openaiKey.trim()) return;
     setSaving(true);
     setSaveResult(null);
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ anthropic_api_key: anthropicKey.trim() }),
+        body: JSON.stringify({ openai_api_key: openaiKey.trim() }),
       });
       const data = await res.json();
       if (res.ok) {
         setSaveResult({ ok: true, message: data.message, deploying: data.deploying });
-        setAnthropicStatus('configured');
-        setAnthropicPreview(data.key_preview);
-        setAnthropicKey('');
+        setOpenaiStatus('configured');
+        setOpenaiPreview(data.key_preview);
+        setOpenaiKey('');
         if (data.deploying) {
           setDeploying(true);
         }
@@ -108,53 +108,53 @@ export default function SettingsPage() {
               <p className="text-sm text-gray-500">Required for strategy generation and publisher discovery</p>
             </div>
             <div className="ml-auto">
-              {anthropicStatus === 'configured' && <Badge variant="success">AI Active</Badge>}
-              {anthropicStatus === 'not_set' && <Badge variant="warning">Setup Required</Badge>}
+              {openaiStatus === 'configured' && <Badge variant="success">AI Active</Badge>}
+              {openaiStatus === 'not_set' && <Badge variant="warning">Setup Required</Badge>}
             </div>
           </div>
 
-          {anthropicStatus === 'not_set' && (
+          {openaiStatus === 'not_set' && (
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 flex gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-amber-800">Anthropic API Key Required</p>
+                <p className="text-sm font-medium text-amber-800">OpenAI API Key Required</p>
                 <p className="text-sm text-amber-700 mt-1">
-                  All AI features (strategy generation, publisher discovery, outreach) require an Anthropic API key.
-                  Get yours free at{' '}
-                  <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer"
+                  All AI features (strategy generation, publisher discovery, outreach) require an OpenAI API key.
+                  Get yours at{' '}
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer"
                     className="font-medium underline">
-                    console.anthropic.com
+                    platform.openai.com
                   </a>
                 </p>
               </div>
             </div>
           )}
 
-          {anthropicStatus === 'configured' && (
+          {openaiStatus === 'configured' && (
             <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-sm font-medium text-green-800">API Key Configured</p>
-                {anthropicPreview && (
-                  <p className="text-xs text-green-600 font-mono mt-0.5">{anthropicPreview}</p>
+                {openaiPreview && (
+                  <p className="text-xs text-green-600 font-mono mt-0.5">{openaiPreview}</p>
                 )}
               </div>
-              <p className="ml-auto text-xs text-green-600">Using claude-opus-4-6 (Claude MAX)</p>
+              <p className="ml-auto text-xs text-green-600">Using GPT-4o</p>
             </div>
           )}
 
           <div className="mt-5 space-y-3">
             <p className="text-sm font-medium text-gray-700">
-              {anthropicStatus === 'configured' ? 'Update API Key' : 'Enter Your Anthropic API Key'}
+              {openaiStatus === 'configured' ? 'Update API Key' : 'Enter Your OpenAI API Key'}
             </p>
             <div className="relative">
               <input
                 type={showKey ? 'text' : 'password'}
-                value={anthropicKey}
-                onChange={e => setAnthropicKey(e.target.value)}
-                placeholder="sk-ant-api03-..."
+                value={openaiKey}
+                onChange={e => setOpenaiKey(e.target.value)}
+                placeholder="sk-proj-..."
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
-                onKeyDown={e => { if (e.key === 'Enter') handleSaveAnthropicKey(); }}
+                onKeyDown={e => { if (e.key === 'Enter') handleSaveOpenaiKey(); }}
               />
               <button
                 type="button"
@@ -199,8 +199,8 @@ export default function SettingsPage() {
 
             <div className="flex items-center gap-3">
               <Button
-                onClick={handleSaveAnthropicKey}
-                disabled={!anthropicKey.trim() || saving}
+                onClick={handleSaveOpenaiKey}
+                disabled={!openaiKey.trim() || saving}
               >
                 {saving ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing & Saving...</>
@@ -209,7 +209,7 @@ export default function SettingsPage() {
                 )}
               </Button>
               <a
-                href="https://console.anthropic.com/settings/keys"
+                href="https://platform.openai.com/api-keys"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-indigo-600 hover:underline flex items-center gap-1"
@@ -330,13 +330,13 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
               <div className="flex items-center gap-2">
                 <Key className="h-4 w-4 text-gray-400" />
-                <span className="text-sm font-medium">Anthropic Claude API</span>
-                {anthropicPreview && (
-                  <span className="text-xs text-gray-400 font-mono">{anthropicPreview}</span>
+                <span className="text-sm font-medium">OpenAI GPT-4o API</span>
+                {openaiPreview && (
+                  <span className="text-xs text-gray-400 font-mono">{openaiPreview}</span>
                 )}
               </div>
-              <Badge variant={anthropicStatus === 'configured' ? 'success' : 'warning'}>
-                {anthropicStatus === 'configured' ? 'Active' : 'Not Configured'}
+              <Badge variant={openaiStatus === 'configured' ? 'success' : 'warning'}>
+                {openaiStatus === 'configured' ? 'Active' : 'Not Configured'}
               </Badge>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">

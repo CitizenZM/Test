@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ['openai', 'undici', 'https-proxy-agent'],
 };
 
 export default nextConfig;

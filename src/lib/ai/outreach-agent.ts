@@ -1,5 +1,5 @@
-import { getAnthropicClient } from './client';
-import { Publisher, OutreachGenerateRequest, MessageType, MANAGED_BRANDS } from '@/types';
+import { getOpenAIClient } from './client';
+import { Publisher, MessageType, MANAGED_BRANDS } from '@/types';
 
 interface GenerateParams {
   publisher: Publisher;
@@ -50,7 +50,7 @@ const BRAND_TEMPLATES: Record<string, { intro: string; products: string; value_p
 };
 
 export async function generateOutreachMessage(params: GenerateParams): Promise<string> {
-  const client = getAnthropicClient();
+  const client = getOpenAIClient();
   const { publisher, channel, message_type = 'cold_intro', brand_id, brand_name, brand_context, tone = 'professional' } = params;
 
   const brandKey = brand_id || 'tcl';
@@ -109,11 +109,11 @@ Requirements:
 
 Return ONLY the message text, nothing else.`;
 
-  const response = await client.messages.create({
-    model: 'claude-opus-4-6',
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o',
     max_tokens: 1024,
     messages: [{ role: 'user', content: prompt }],
   });
 
-  return response.content[0].type === 'text' ? response.content[0].text : '';
+  return response.choices[0]?.message?.content || '';
 }

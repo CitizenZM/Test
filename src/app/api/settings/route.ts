@@ -1,39 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCachedSetting, setCachedSetting } from '@/lib/settings-cache';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
+import { ProxyAgent, fetch as undiciFetch } from 'undici';
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_TrhCebxHiPG5IzWB4KGxvZiypiuL';
 
 export async function GET() {
-  const hasAnthropicKey = !!(getCachedSetting('ANTHROPIC_API_KEY'));
+  const hasOpenAIKey = !!(getCachedSetting('OPENAI_API_KEY'));
   return NextResponse.json({
-    anthropic_configured: hasAnthropicKey,
-    anthropic_key_preview: hasAnthropicKey
-      ? `${getCachedSetting('ANTHROPIC_API_KEY')!.substring(0, 16)}...`
+    openai_configured: hasOpenAIKey,
+    // Keep anthropic_configured as alias for backward compat with any UI code
+    anthropic_configured: hasOpenAIKey,
+    openai_key_preview: hasOpenAIKey
+      ? `${getCachedSetting('OPENAI_API_KEY')!.substring(0, 16)}...`
+      : null,
+    anthropic_key_preview: hasOpenAIKey
+      ? `${getCachedSetting('OPENAI_API_KEY')!.substring(0, 16)}...`
       : null,
   });
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { anthropic_api_key } = await request.json();
+    const body = await request.json();
+    const apiKey = body.openai_api_key || body.anthropic_api_key;
 
-    if (!anthropic_api_key || typeof anthropic_api_key !== 'string') {
-      return NextResponse.json({ error: 'anthropic_api_key is required' }, { status: 400 });
+    if (!apiKey || typeof apiKey !== 'string') {
+      return NextResponse.json({ error: 'API key is required' }, { status: 400 });
     }
 
-    const trimmedKey = anthropic_api_key.trim();
+    const trimmedKey = apiKey.trim();
 
     // Test the key first
     try {
-      const testClient = new Anthropic({ apiKey: trimmedKey });
-      const testResult = await testClient.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+      const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy;
+      let proxyFetchFn: typeof globalThis.fetch | undefined;
+      if (proxyUrl) {
+        const dispatcher = new ProxyAgent(proxyUrl);
+        proxyFetchFn = ((input: string | URL | Request, init?: RequestInit) => {
+          return undiciFetch(input as string, { ...init, dispatcher } as Record<string, unknown>);
+        }) as unknown as typeof globalThis.fetch;
+      }
+      const testClient = new OpenAI({
+        apiKey: trimmedKey,
+        ...(proxyFetchFn ? { fetch: proxyFetchFn } : {}),
+      });
+      const testResult = await testClient.chat.completions.create({
+        model: 'gpt-4o-mini',
         max_tokens: 10,
         messages: [{ role: 'user', content: 'Say: OK' }],
       });
-      if (!testResult.content.length) {
+      if (!testResult.choices[0]?.message?.content) {
         return NextResponse.json({ error: 'API key test failed — no response received' }, { status: 400 });
       }
     } catch (err) {
@@ -42,14 +60,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Cache immediately for this invocation
-    setCachedSetting('ANTHROPIC_API_KEY', trimmedKey);
+    setCachedSetting('OPENAI_API_KEY', trimmedKey);
 
     let deploymentUrl: string | null = null;
 
     // Persist to Vercel env vars and trigger redeploy
     if (VERCEL_TOKEN) {
       try {
-        await upsertVercelEnv('ANTHROPIC_API_KEY', trimmedKey);
+        await upsertVercelEnv('OPENAI_API_KEY', trimmedKey);
         const deployment = await triggerRedeploy();
         deploymentUrl = deployment?.url || null;
       } catch (err) {

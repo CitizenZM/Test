@@ -1,4 +1,4 @@
-import { getAnthropicClient } from './client';
+import { getOpenAIClient } from './client';
 import type { RecruitmentStrategy } from '@/types';
 
 interface ScoreResult {
@@ -18,7 +18,7 @@ export async function analyzePublisher(
   website: string,
   options?: ScoreOptions
 ): Promise<ScoreResult> {
-  const client = getAnthropicClient();
+  const client = getOpenAIClient();
 
   const brandContext =
     options?.strategy && options?.brandName
@@ -49,13 +49,13 @@ Return ONLY a JSON object with these fields:
   "analysis": "<string>"
 }`;
 
-  const response = await client.messages.create({
-    model: 'claude-opus-4-6',
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o',
     max_tokens: 1024,
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : '{}';
+  const text = response.choices[0]?.message?.content || '{}';
 
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);

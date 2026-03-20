@@ -1,4 +1,4 @@
-import { getAnthropicClient } from './client';
+import { getOpenAIClient } from './client';
 import type { RecruitmentStrategy } from '@/types';
 
 interface DiscoverParams {
@@ -21,7 +21,7 @@ interface DiscoveredPublisher {
 }
 
 export async function discoverPublishers(params: DiscoverParams): Promise<DiscoveredPublisher[]> {
-  const client = getAnthropicClient();
+  const client = getOpenAIClient();
 
   const brandContext = params.brand
     ? `\nBrand context: Finding publishers for ${params.brand} affiliate program.`
@@ -57,13 +57,13 @@ Return exactly 10 publisher recommendations as a JSON array. Each publisher shou
 
 Return ONLY the JSON array, no other text.`;
 
-  const response = await client.messages.create({
-    model: 'claude-opus-4-6',
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o',
     max_tokens: 4096,
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const text = response.choices[0]?.message?.content || '';
 
   try {
     const jsonMatch = text.match(/\[[\s\S]*\]/);

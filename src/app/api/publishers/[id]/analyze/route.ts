@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { analyzePublisher } from '@/lib/ai/scoring';
 
+function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T | null> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
+  ]);
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -17,19 +24,23 @@ export async function POST(
 
     const scores = await analyzePublisher(name, website);
 
-    const supabase = createServiceClient();
-    const { error } = await supabase
-      .from('publishers')
-      .update({
-        modeled_roas: scores.publisher_score / 20,
-        domain_authority: scores.traffic_score,
-        summary_note: scores.analysis,
-        enrichment_status: 'ai_analyzed',
-      })
-      .eq('id', id);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    // Try to persist to Supabase with a 5s timeout
+    try {
+      const supabase = createServiceClient();
+      await withTimeout(
+        supabase
+          .from('publishers')
+          .update({
+            modeled_roas: scores.publisher_score / 20,
+            domain_authority: scores.traffic_score,
+            summary_note: scores.analysis,
+            enrichment_status: 'ai_analyzed',
+          })
+          .eq('id', id),
+        5000
+      );
+    } catch {
+      // DB update failed — still return scores
     }
 
     return NextResponse.json(scores);
