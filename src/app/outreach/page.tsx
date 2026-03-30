@@ -8,6 +8,7 @@ import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MessagePreview } from '@/components/outreach/message-preview';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { useToast, ToastContainer } from '@/components/ui/toast';
 import { Publisher, Outreach, MessageType, MANAGED_BRANDS } from '@/types';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -29,6 +30,7 @@ const MESSAGE_TYPES: { value: MessageType; label: string }[] = [
 function OutreachContent() {
   const searchParams = useSearchParams();
   const preselectedPublisher = searchParams.get('publisher');
+  const { toasts, toast, removeToast } = useToast();
 
   const [publishers, setPublishers] = useState<Publisher[]>([]);
   const [outreachList, setOutreachList] = useState<Outreach[]>([]);
@@ -38,28 +40,40 @@ function OutreachContent() {
   const [brandId, setBrandId] = useState('tcl');
   const [generatedMessage, setGeneratedMessage] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [savingOutreach, setSavingOutreach] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
-      const [pubRes, outRes] = await Promise.all([
-        fetch('/api/publishers?limit=200'),
-        fetch('/api/outreach'),
-      ]);
-      if (pubRes.ok) {
-        const data = await pubRes.json();
-        setPublishers(Array.isArray(data) ? data : data.publishers || []);
+      try {
+        const [pubRes, outRes] = await Promise.all([
+          fetch('/api/publishers?limit=200'),
+          fetch('/api/outreach'),
+        ]);
+        if (pubRes.ok) {
+          const data = await pubRes.json();
+          setPublishers(Array.isArray(data) ? data : data.publishers || []);
+        }
+        if (outRes.ok) setOutreachList(await outRes.json());
+      } catch {
+        toast.error('Failed to load data');
       }
-      if (outRes.ok) setOutreachList(await outRes.json());
     }
     fetchData();
   }, []);
 
   async function handleGenerate() {
-    if (!selectedPublisher) return;
+    if (!selectedPublisher) {
+      toast.warning('Please select a publisher first');
+      return;
+    }
     const publisher = publishers.find((p) => String(p.id) === selectedPublisher);
-    if (!publisher) return;
+    if (!publisher) {
+      toast.error('Publisher not found');
+      return;
+    }
 
     setGenerating(true);
+    toast.info('Generating personalized message...');
     try {
       const brand = MANAGED_BRANDS.find(b => b.id === brandId);
       const res = await fetch('/api/outreach/generate', {
@@ -76,9 +90,13 @@ function OutreachContent() {
       if (res.ok) {
         const data = await res.json();
         setGeneratedMessage(data.message);
+        toast.success('Message generated!');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || 'Failed to generate message. Check your OpenAI key in Settings.');
       }
     } catch {
-      // Handle error
+      toast.error('Network error generating message');
     } finally {
       setGenerating(false);
     }
@@ -86,8 +104,9 @@ function OutreachContent() {
 
   async function handleSave() {
     if (!generatedMessage || !selectedPublisher) return;
+    setSavingOutreach(true);
     try {
-      await fetch('/api/outreach', {
+      const res = await fetch('/api/outreach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,16 +118,24 @@ function OutreachContent() {
           status: 'contacted',
         }),
       });
-      setGeneratedMessage('');
-      const res = await fetch('/api/outreach');
-      if (res.ok) setOutreachList(await res.json());
+      if (res.ok) {
+        toast.success('Outreach saved and marked as sent!');
+        setGeneratedMessage('');
+        const outRes = await fetch('/api/outreach');
+        if (outRes.ok) setOutreachList(await outRes.json());
+      } else {
+        toast.error('Failed to save outreach record');
+      }
     } catch {
-      // Handle error
+      toast.error('Network error saving outreach');
+    } finally {
+      setSavingOutreach(false);
     }
   }
 
   return (
     <>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <Header title="AI Outreach" description="Generate brand-personalized outreach messages with AI" />
 
       <div className="p-8 space-y-6">
@@ -165,7 +192,13 @@ function OutreachContent() {
           <div className="space-y-3">
             <MessagePreview message={generatedMessage} channel={channel} />
             <div className="flex gap-3">
-              <Button onClick={handleSave}>Save & Mark Sent</Button>
+              <Button onClick={handleSave} disabled={savingOutreach}>
+                {savingOutreach ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+                ) : (
+                  'Save & Mark Sent'
+                )}
+              </Button>
               <Button variant="outline" onClick={() => handleGenerate()}>Regenerate</Button>
               <Button variant="outline" onClick={() => setGeneratedMessage('')}>Clear</Button>
             </div>
@@ -202,7 +235,7 @@ function OutreachContent() {
                 {outreachList.length === 0 && (
                   <TableRow>
                     <TableCell className="text-center text-gray-500 py-8" colSpan={6}>
-                      No outreach records yet
+                      No outreach records yet. Select a publisher and generate your first message above.
                     </TableCell>
                   </TableRow>
                 )}

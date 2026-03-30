@@ -6,6 +6,7 @@ import { Card, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useToast, ToastContainer } from '@/components/ui/toast';
 import { MANAGED_BRANDS } from '@/types';
 import {
   Save, ExternalLink, Key, Mail, Building2, Globe,
@@ -14,6 +15,8 @@ import {
 } from 'lucide-react';
 
 export default function SettingsPage() {
+  const { toasts, toast, removeToast } = useToast();
+
   // OpenAI key state
   const [openaiKey, setOpenaiKey] = useState('');
   const [openaiStatus, setOpenaiStatus] = useState<'unknown' | 'configured' | 'not_set'>('unknown');
@@ -27,9 +30,11 @@ export default function SettingsPage() {
   // Other settings
   const [impactSid, setImpactSid] = useState('');
   const [impactToken, setImpactToken] = useState('');
+  const [savingImpact, setSavingImpact] = useState(false);
   const [resendKey, setResendKey] = useState('');
   const [senderEmail, setSenderEmail] = useState('affiliate@celldigital.co');
   const [senderName, setSenderName] = useState('Cell Digital Partnerships');
+  const [savingEmail, setSavingEmail] = useState(false);
 
   const checkStatus = useCallback(() => {
     fetch('/api/settings')
@@ -92,8 +97,64 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleSaveImpact() {
+    if (!impactSid.trim() || !impactToken.trim()) {
+      toast.warning('Please enter both Account SID and Auth Token');
+      return;
+    }
+    setSavingImpact(true);
+    try {
+      // Store in localStorage for now (Impact.com integration is planned)
+      localStorage.setItem('impact_sid', impactSid);
+      localStorage.setItem('impact_token', impactToken);
+      toast.success('Impact.com credentials saved locally. Full integration coming soon.');
+    } catch {
+      toast.error('Failed to save Impact.com credentials');
+    } finally {
+      setSavingImpact(false);
+    }
+  }
+
+  async function handleSaveEmail() {
+    if (!resendKey.trim()) {
+      toast.warning('Please enter a Resend API key');
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      // Store in localStorage for now (Email integration is planned)
+      localStorage.setItem('resend_key', resendKey);
+      localStorage.setItem('sender_email', senderEmail);
+      localStorage.setItem('sender_name', senderName);
+      toast.success('Email settings saved locally. Full integration coming soon.');
+    } catch {
+      toast.error('Failed to save email settings');
+    } finally {
+      setSavingEmail(false);
+    }
+  }
+
+  // Load saved settings from localStorage
+  useEffect(() => {
+    try {
+      const sid = localStorage.getItem('impact_sid');
+      const token = localStorage.getItem('impact_token');
+      const rKey = localStorage.getItem('resend_key');
+      const sEmail = localStorage.getItem('sender_email');
+      const sName = localStorage.getItem('sender_name');
+      if (sid) setImpactSid(sid);
+      if (token) setImpactToken(token);
+      if (rKey) setResendKey(rKey);
+      if (sEmail) setSenderEmail(sEmail);
+      if (sName) setSenderName(sName);
+    } catch {
+      // localStorage not available
+    }
+  }, []);
+
   return (
     <>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <Header title="Settings" description="Configure integrations and preferences" />
 
       <div className="p-8 space-y-6 max-w-4xl">
@@ -275,8 +336,16 @@ export default function SettingsPage() {
               type="password"
             />
             <div className="flex items-center gap-3">
-              <Button disabled={!impactSid || !impactToken} variant="outline">
-                <Key className="mr-2 h-4 w-4" /> Save Credentials
+              <Button
+                disabled={!impactSid || !impactToken || savingImpact}
+                variant="outline"
+                onClick={handleSaveImpact}
+              >
+                {savingImpact ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+                ) : (
+                  <><Key className="mr-2 h-4 w-4" /> Save Credentials</>
+                )}
               </Button>
               <a href="https://app.impact.com" target="_blank" rel="noopener noreferrer"
                 className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
@@ -316,8 +385,12 @@ export default function SettingsPage() {
                 onChange={(e) => setSenderName(e.target.value)}
               />
             </div>
-            <Button variant="outline">
-              <Save className="mr-2 h-4 w-4" /> Save Email Settings
+            <Button variant="outline" onClick={handleSaveEmail} disabled={savingEmail}>
+              {savingEmail ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+              ) : (
+                <><Save className="mr-2 h-4 w-4" /> Save Email Settings</>
+              )}
             </Button>
           </div>
         </Card>

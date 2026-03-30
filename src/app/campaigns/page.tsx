@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Modal } from '@/components/ui/modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { useToast, ToastContainer } from '@/components/ui/toast';
 import { Campaign, CampaignType, MANAGED_BRANDS, PUBLISHER_CATEGORIES } from '@/types';
 import { Plus, Loader2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -32,10 +33,12 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newBrand, setNewBrand] = useState('tcl');
   const [newCategory, setNewCategory] = useState('');
   const [newType, setNewType] = useState<CampaignType>('recruitment');
+  const { toasts, toast, removeToast } = useToast();
 
   useEffect(() => {
     fetchCampaigns();
@@ -44,16 +47,24 @@ export default function CampaignsPage() {
   async function fetchCampaigns() {
     try {
       const res = await fetch('/api/campaigns');
-      if (res.ok) setCampaigns(await res.json());
+      if (res.ok) {
+        setCampaigns(await res.json());
+      } else {
+        toast.error('Failed to load campaigns');
+      }
     } catch {
-      // Handle error
+      toast.error('Network error loading campaigns');
     } finally {
       setLoading(false);
     }
   }
 
   async function handleCreate() {
-    if (!newName.trim()) return;
+    if (!newName.trim()) {
+      toast.warning('Please enter a campaign name');
+      return;
+    }
+    setCreating(true);
     const brand = MANAGED_BRANDS.find(b => b.id === newBrand);
     try {
       const res = await fetch('/api/campaigns', {
@@ -68,20 +79,27 @@ export default function CampaignsPage() {
         }),
       });
       if (res.ok) {
+        toast.success(`Campaign "${newName}" created!`);
         setShowCreate(false);
         setNewName('');
         setNewBrand('tcl');
         setNewCategory('');
         setNewType('recruitment');
         fetchCampaigns();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || 'Failed to create campaign');
       }
     } catch {
-      // Handle error
+      toast.error('Network error creating campaign');
+    } finally {
+      setCreating(false);
     }
   }
 
   return (
     <>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <Header
         title="Campaigns"
         description="Manage outreach campaigns and automation sequences"
@@ -175,7 +193,9 @@ export default function CampaignsPage() {
           />
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!newName.trim()}>Create</Button>
+            <Button onClick={handleCreate} disabled={!newName.trim() || creating}>
+              {creating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</> : 'Create'}
+            </Button>
           </div>
         </div>
       </Modal>

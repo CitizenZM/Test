@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { PublisherTable } from '@/components/publishers/publisher-table';
 import { Badge } from '@/components/ui/badge';
+import { useToast, ToastContainer } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import {
   Publisher,
@@ -65,6 +66,7 @@ export default function PublishersPage() {
 
 function PublishersPageInner() {
   const searchParams = useSearchParams();
+  const { toasts, toast, removeToast } = useToast();
 
   const [publishers, setPublishers] = useState<Publisher[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -197,7 +199,7 @@ function PublishersPageInner() {
         }
       }
     } catch {
-      // Handle error
+      // Silent - publisher list is not critical to show error
     } finally {
       setLoading(false);
     }
@@ -205,10 +207,14 @@ function PublishersPageInner() {
 
   async function handleDiscover() {
     const searchKeyword = keyword;
-    if (!searchKeyword.trim()) return;
+    if (!searchKeyword.trim()) {
+      toast.warning('Please enter a keyword to discover publishers');
+      return;
+    }
     setDiscovering(true);
+    toast.info(`Discovering publishers for "${searchKeyword}"... This may take 10-20 seconds.`);
     try {
-      const selectedBrand = getSelectedBrand();
+      const brand = getSelectedBrand();
       const res = await fetch('/api/publishers/discover', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -216,25 +222,40 @@ function PublishersPageInner() {
           keyword: searchKeyword,
           category: category,
           product: '',
-          brand: selectedBrand?.brand_name || '',
+          brand: brand?.brand_name || '',
           strategy: activeStrategy || undefined,
         }),
       });
       if (res.ok) {
         const data = await res.json();
-        setPublishers((prev) => [...data, ...prev]);
+        if (Array.isArray(data) && data.length > 0) {
+          setPublishers((prev) => [...data, ...prev]);
+          setTotalCount((prev) => prev + data.length);
+          toast.success(`Found ${data.length} publishers for "${searchKeyword}"!`);
+        } else {
+          toast.warning('No publishers found for that keyword. Try a different search term.');
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || `Discovery failed (${res.status}). Check your OpenAI API key in Settings.`);
       }
-    } catch {
-      // Handle error
+    } catch (err) {
+      toast.error('Network error during discovery. Please try again.');
+      console.error('Discovery error:', err);
     } finally {
       setDiscovering(false);
     }
   }
 
   async function handleBulkDiscover() {
-    if (!activeStrategy || !selectedBrand) return;
+    const brand = getSelectedBrand();
+    if (!activeStrategy || !brand) {
+      toast.warning('Select a brand with a strategy first');
+      return;
+    }
     setBulkDiscovering(true);
     setBulkProgress({ current: 0, total: 15, found: 0 });
+    toast.info(`Starting bulk discovery for ${brand.brand_name}... This takes 2-3 minutes.`);
     try {
       const res = await fetch('/api/publishers/bulk-discover', {
         method: 'POST',
@@ -242,20 +263,24 @@ function PublishersPageInner() {
         body: JSON.stringify({
           keywords: activeStrategy.discovery_keywords,
           categories: activeStrategy.target_categories,
-          brand: selectedBrand.brand_name,
+          brand: brand.brand_name,
           strategy: activeStrategy,
         }),
       });
       if (res.ok) {
         const data = await res.json();
         setBulkProgress({ current: data.tasks_run, total: data.tasks_run, found: data.total_saved });
+        toast.success(`Bulk discovery complete! Found ${data.total_saved} publishers.`);
         await fetchPublishers();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || 'Bulk discovery failed');
       }
-    } catch {
-      // Handle error
+    } catch (err) {
+      toast.error('Network error during bulk discovery. Please try again.');
+      console.error('Bulk discovery error:', err);
     } finally {
       setBulkDiscovering(false);
-      // Don't auto-hide - user can dismiss manually
     }
   }
 
@@ -270,6 +295,7 @@ function PublishersPageInner() {
 
   return (
     <>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <Header
         title="Publisher Finder"
         description={`Discover affiliate publishers from ${totalCount.toLocaleString()} records`}
@@ -477,7 +503,12 @@ function PublishersPageInner() {
               placeholder="e.g. action camera, 360 camera review"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleDiscover();
+                }
+              }}
               id="keyword"
               label="Search / Keyword"
             />
@@ -580,13 +611,13 @@ function PublishersPageInner() {
           <div className="rounded-xl border border-green-200 bg-green-50 p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-green-900">
-                ✓ Bulk Discovery Complete — {bulkProgress.found} new publishers added
+                Bulk Discovery Complete — {bulkProgress.found} new publishers added
               </p>
               <p className="text-xs text-green-700 mt-0.5">
                 {bulkProgress.tasks_run} keyword searches completed. Publisher list updated below.
               </p>
             </div>
-            <button onClick={() => setBulkProgress(null)} className="text-green-500 hover:text-green-700 text-lg">×</button>
+            <button onClick={() => setBulkProgress(null)} className="text-green-500 hover:text-green-700 text-lg">x</button>
           </div>
         )}
 

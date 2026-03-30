@@ -6,8 +6,9 @@ import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
+import { useToast, ToastContainer } from '@/components/ui/toast';
 import { Campaign, SequenceStep } from '@/types';
-import { ArrowLeft, Plus, Loader2, Play, Pause } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, Play, Pause, Save } from 'lucide-react';
 import Link from 'next/link';
 
 const actionLabels: Record<string, string> = {
@@ -28,6 +29,9 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [toggling, setToggling] = useState(false);
+  const { toasts, toast, removeToast } = useToast();
 
   useEffect(() => {
     async function fetchCampaign() {
@@ -36,9 +40,11 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         if (res.ok) {
           const data = await res.json();
           setCampaign(Array.isArray(data) ? data[0] : data);
+        } else {
+          toast.error('Failed to load campaign');
         }
       } catch {
-        // Handle error
+        toast.error('Network error loading campaign');
       } finally {
         setLoading(false);
       }
@@ -56,15 +62,51 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
       day: seq.length > 0 ? seq[seq.length - 1].day + 3 : 1,
     };
     setCampaign({ ...campaign, sequence: [...seq, newStep] });
+    toast.info('Step added. Click Save to persist changes.');
   }
 
   async function saveSequence() {
     if (!campaign) return;
-    await fetch('/api/campaigns', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: campaign.id, sequence: campaign.sequence }),
-    });
+    setSaving(true);
+    try {
+      const res = await fetch('/api/campaigns', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: campaign.id, sequence: campaign.sequence }),
+      });
+      if (res.ok) {
+        toast.success('Sequence saved successfully!');
+      } else {
+        toast.error('Failed to save sequence');
+      }
+    } catch {
+      toast.error('Network error saving sequence');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function toggleStatus() {
+    if (!campaign) return;
+    const newStatus = campaign.status === 'active' ? 'paused' : 'active';
+    setToggling(true);
+    try {
+      const res = await fetch('/api/campaigns', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: campaign.id, status: newStatus }),
+      });
+      if (res.ok) {
+        setCampaign({ ...campaign, status: newStatus });
+        toast.success(`Campaign ${newStatus === 'active' ? 'activated' : 'paused'}`);
+      } else {
+        toast.error('Failed to update campaign status');
+      }
+    } catch {
+      toast.error('Network error updating campaign');
+    } finally {
+      setToggling(false);
+    }
   }
 
   if (loading) {
@@ -88,6 +130,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <Header
         title={campaign.name}
         description={`${campaign.brand_name || 'No brand'} - ${campaign.category || 'Uncategorized'}`}
@@ -97,9 +140,15 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
               <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
             </Link>
             {campaign.status === 'active' ? (
-              <Button variant="secondary"><Pause className="mr-2 h-4 w-4" /> Pause</Button>
+              <Button variant="secondary" onClick={toggleStatus} disabled={toggling}>
+                {toggling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pause className="mr-2 h-4 w-4" />}
+                Pause
+              </Button>
             ) : (
-              <Button><Play className="mr-2 h-4 w-4" /> Activate</Button>
+              <Button onClick={toggleStatus} disabled={toggling}>
+                {toggling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                Activate
+              </Button>
             )}
           </div>
         }
@@ -118,7 +167,10 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             <CardTitle>Automation Sequence</CardTitle>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={addStep}><Plus className="mr-1 h-4 w-4" /> Add Step</Button>
-              <Button size="sm" onClick={saveSequence}>Save</Button>
+              <Button size="sm" onClick={saveSequence} disabled={saving}>
+                {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
+                Save
+              </Button>
             </div>
           </div>
 

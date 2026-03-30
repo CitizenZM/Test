@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Modal } from '@/components/ui/modal';
+import { useToast, ToastContainer } from '@/components/ui/toast';
 import {
   MANAGED_BRANDS,
   BRAND_CATEGORIES,
@@ -32,6 +33,7 @@ export default function BrandsPage() {
   const [brands, setBrands] = useState<BrandWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const { toasts, toast, removeToast } = useToast();
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -52,9 +54,11 @@ export default function BrandsPage() {
       if (res.ok) {
         const data = await res.json();
         setBrands(data);
+      } else {
+        toast.error('Failed to load brands');
       }
     } catch {
-      // Use empty
+      toast.error('Network error loading brands');
     } finally {
       setLoading(false);
     }
@@ -80,29 +84,48 @@ export default function BrandsPage() {
     setFormCompetitors(updated);
   }
 
+  function resetForm() {
+    setFormName('');
+    setFormUrl('');
+    setFormCategory('');
+    setFormCompetitors([{ name: '', url: '' }]);
+  }
+
   async function handleCreate() {
+    if (!formName.trim()) {
+      toast.warning('Please enter a brand name');
+      return;
+    }
+    if (!formUrl.trim()) {
+      toast.warning('Please enter a brand URL');
+      return;
+    }
+
     setCreating(true);
     try {
       const res = await fetch('/api/brands', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          brand_name: formName,
-          primary_domain: formUrl,
+          brand_name: formName.trim(),
+          primary_domain: formUrl.trim(),
           category: formCategory,
           competitors: formCompetitors.filter((c) => c.name || c.url),
         }),
       });
+
       if (res.ok) {
+        toast.success(`Brand "${formName}" created successfully!`);
         setShowModal(false);
-        setFormName('');
-        setFormUrl('');
-        setFormCategory('');
-        setFormCompetitors([{ name: '', url: '' }]);
+        resetForm();
         fetchBrands();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || `Failed to create brand (${res.status})`);
       }
-    } catch {
-      // Handle error
+    } catch (err) {
+      toast.error('Network error creating brand. Please try again.');
+      console.error('Brand creation error:', err);
     } finally {
       setCreating(false);
     }
@@ -121,6 +144,7 @@ export default function BrandsPage() {
 
   return (
     <>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <Header
         title="Advertiser Profiles"
         description="Manage brand profiles and AI recruitment strategies"
@@ -385,7 +409,7 @@ export default function BrandsPage() {
               ) : (
                 <Plus className="mr-2 h-4 w-4" />
               )}
-              Create Brand
+              {creating ? 'Creating...' : 'Create Brand'}
             </Button>
           </div>
         </div>
