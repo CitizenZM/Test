@@ -25,10 +25,8 @@ const statusVariant: Record<string, 'default' | 'success' | 'warning' | 'info'> 
 
 const GOAL_OPTIONS = [
   { value: 'awareness', label: 'Brand Awareness' },
-  { value: 'recruitment', label: 'Publisher Recruitment' },
-  { value: 'product_launch', label: 'Product Launch' },
+  { value: 'launch', label: 'Product Launch' },
   { value: 'seasonal', label: 'Seasonal Campaign' },
-  { value: 're_engagement', label: 'Re-engagement' },
 ];
 
 const CHANNEL_OPTIONS = ['email', 'linkedin', 'instagram', 'tiktok', 'twitter', 'edm', 'sms'];
@@ -41,7 +39,7 @@ export default function CampaignsPage() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newBrandId, setNewBrandId] = useState('');
-  const [newGoal, setNewGoal] = useState('recruitment');
+  const [newGoal, setNewGoal] = useState('awareness');
   const [newBriefing, setNewBriefing] = useState('');
   const [newChannels, setNewChannels] = useState<string[]>(['email']);
   const { toasts, toast, removeToast } = useToast();
