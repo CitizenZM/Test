@@ -80,7 +80,7 @@ Return ONLY a JSON object with this exact structure. For all text fields, provid
 }`;
 
   const response = await client.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],
   });

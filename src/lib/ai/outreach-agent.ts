@@ -110,7 +110,7 @@ Requirements:
 Return ONLY the message text, nothing else.`;
 
   const response = await client.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     max_tokens: 1024,
     messages: [{ role: 'user', content: prompt }],
   });

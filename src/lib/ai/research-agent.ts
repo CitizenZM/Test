@@ -58,7 +58,7 @@ Return exactly 10 publisher recommendations as a JSON array. Each publisher shou
 Return ONLY the JSON array, no other text.`;
 
   const response = await client.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     max_tokens: 4096,
     messages: [{ role: 'user', content: prompt }],
   });

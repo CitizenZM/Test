@@ -2,7 +2,12 @@ import OpenAI from 'openai';
 import { getCachedSetting } from '@/lib/settings-cache';
 
 function createProxyFetch(proxyUrl: string): typeof globalThis.fetch | undefined {
+  // Only attempt proxy in Node.js runtime (not Edge)
+  if (typeof globalThis.process === 'undefined' || !globalThis.process?.versions?.node) {
+    return undefined;
+  }
   try {
+    // Dynamic require for Node.js only — will be skipped in Edge runtime
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const undici = require('undici');
     const dispatcher = new undici.ProxyAgent(proxyUrl);
