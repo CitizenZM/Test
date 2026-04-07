@@ -6,7 +6,8 @@
 const cache: Record<string, string> = {};
 
 export function getCachedSetting(key: string): string | undefined {
-  return cache[key] || process.env[key] || undefined;
+  const val = cache[key] || process.env[key] || undefined;
+  return val?.trim() || undefined;
 }
 
 export function setCachedSetting(key: string, value: string): void {

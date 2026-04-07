@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { generateRecruitmentStrategy } from '@/lib/ai/strategy-agent';
+import { formatAIError } from '@/lib/ai/error-messages';
 
 export const maxDuration = 60;
 
@@ -32,12 +33,17 @@ export async function POST(
       ? (vp as Record<string, unknown>).__competitors
       : profile?.competitors || [];
 
-  const strategy = await generateRecruitmentStrategy({
-    brand_name: brand.brand_name,
-    brand_url: brand.primary_domain || '',
-    category: brand.category || '',
-    competitors: Array.isArray(competitors) ? competitors : [],
-  });
+  let strategy;
+  try {
+    strategy = await generateRecruitmentStrategy({
+      brand_name: brand.brand_name,
+      brand_url: brand.primary_domain || '',
+      category: brand.category || '',
+      competitors: Array.isArray(competitors) ? competitors : [],
+    });
+  } catch (err) {
+    return NextResponse.json({ error: formatAIError(err) }, { status: 500 });
+  }
 
   const now = new Date().toISOString();
 

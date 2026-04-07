@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateOutreachMessage } from '@/lib/ai/outreach-agent';
+import { formatAIError } from '@/lib/ai/error-messages';
 
 export const maxDuration = 60;
 
@@ -24,7 +25,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ message });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Message generation failed';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: formatAIError(err) }, { status: 500 });
   }
 }

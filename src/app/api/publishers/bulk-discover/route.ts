@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { discoverPublishers } from '@/lib/ai/research-agent';
+import { formatAIError } from '@/lib/ai/error-messages';
 import type { RecruitmentStrategy } from '@/types';
 
 export const maxDuration = 60;
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Bulk discovery failed' },
+      { error: formatAIError(err) },
       { status: 500 }
     );
   }
