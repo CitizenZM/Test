@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { discoverPublishers } from '@/lib/ai/research-agent';
 import type { RecruitmentStrategy } from '@/types';
 
-export const maxDuration = 300; // Allow up to 5 min for bulk discovery
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   try {

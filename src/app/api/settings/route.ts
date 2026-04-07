@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCachedSetting, setCachedSetting } from '@/lib/settings-cache';
 import OpenAI from 'openai';
-import { ProxyAgent, fetch as undiciFetch } from 'undici';
+
+export const maxDuration = 60;
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_TrhCebxHiPG5IzWB4KGxvZiypiuL';
@@ -37,10 +38,16 @@ export async function POST(request: NextRequest) {
       const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy;
       let proxyFetchFn: typeof globalThis.fetch | undefined;
       if (proxyUrl) {
-        const dispatcher = new ProxyAgent(proxyUrl);
-        proxyFetchFn = ((input: string | URL | Request, init?: RequestInit) => {
-          return undiciFetch(input as string, { ...init, dispatcher } as Record<string, unknown>);
-        }) as unknown as typeof globalThis.fetch;
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const undici = require('undici');
+          const dispatcher = new undici.ProxyAgent(proxyUrl);
+          proxyFetchFn = ((input: string | URL | Request, init?: RequestInit) => {
+            return undici.fetch(input as string, { ...init, dispatcher } as Record<string, unknown>);
+          }) as unknown as typeof globalThis.fetch;
+        } catch {
+          // undici not available, skip proxy
+        }
       }
       const testClient = new OpenAI({
         apiKey: trimmedKey,

@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       brand_name: body.brand_name,
       category: body.category,
       primary_domain: body.primary_domain,
-      workspace_id: body.workspace_id || '00000000-0000-0000-0000-000000000000',
+      workspace_id: body.workspace_id || '00000000-0000-4000-a000-000000000001',
       status: 'active',
     })
     .select()

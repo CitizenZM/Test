@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { discoverPublishers } from '@/lib/ai/research-agent';
 
+export const maxDuration = 60;
+
 function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T | null> {
   return Promise.race([
     Promise.resolve(promise),

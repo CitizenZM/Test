@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { generateRecruitmentStrategy } from '@/lib/ai/strategy-agent';
 
+export const maxDuration = 60;
+
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
