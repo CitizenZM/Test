@@ -42,6 +42,7 @@ export default function CampaignsPage() {
   const [newGoal, setNewGoal] = useState('awareness');
   const [newBriefing, setNewBriefing] = useState('');
   const [newChannels, setNewChannels] = useState<string[]>(['email']);
+  const [campaignBrandOptions, setCampaignBrandOptions] = useState<{ id: string; name: string }[]>([]);
   const { toasts, toast, removeToast } = useToast();
 
   useEffect(() => {
@@ -49,8 +50,28 @@ export default function CampaignsPage() {
       fetch('/api/campaigns').then(r => r.ok ? r.json() : []),
       fetch('/api/brands').then(r => r.ok ? r.json() : []),
     ]).then(([campaignData, brandData]) => {
-      setCampaigns(Array.isArray(campaignData) ? campaignData : []);
+      const campaigns = Array.isArray(campaignData) ? campaignData : [];
+      setCampaigns(campaigns);
       setBrands(Array.isArray(brandData) ? brandData : []);
+
+      // Extract brand IDs from existing campaigns for the FK-compatible list
+      const campaignBrandIds = new Set(campaigns.map((c: Campaign) => c.brand_id).filter(Boolean));
+      setCampaignBrandOptions(
+        campaigns
+          .filter((c: Campaign) => c.brand_id)
+          .reduce((acc: { id: string; name: string }[], c: Campaign) => {
+            if (!acc.find(b => b.id === c.brand_id)) {
+              // Extract brand name from campaign name (first word before space)
+              const name = c.name.split(/\s+(Mini|Core|X4|Air|E-Scooter|Ninebot)/)[0] || c.name;
+              acc.push({ id: c.brand_id!, name });
+            }
+            return acc;
+          }, [])
+      );
+
+      // Set default brand_id to TCL if available
+      const tclBrand = campaigns.find((c: Campaign) => c.name.toLowerCase().includes('tcl'));
+      if (tclBrand?.brand_id) setNewBrandId(tclBrand.brand_id);
     }).catch(() => {
       toast.error('Failed to load data');
     }).finally(() => setLoading(false));
@@ -105,7 +126,9 @@ export default function CampaignsPage() {
   function getBrandName(brandId: string | null) {
     if (!brandId) return '-';
     const brand = brands.find(b => b.id === brandId);
-    return brand?.brand_name || brandId.substring(0, 8);
+    if (brand) return brand.brand_name;
+    const campaignBrand = campaignBrandOptions.find(b => b.id === brandId);
+    return campaignBrand?.name || brandId.substring(0, 8);
   }
 
   return (
@@ -192,8 +215,10 @@ export default function CampaignsPage() {
             value={newBrandId}
             onChange={(e) => setNewBrandId(e.target.value)}
             options={[
-              { value: '', label: 'Select a brand...' },
-              ...brands.map((b) => ({ value: b.id, label: b.brand_name })),
+              ...campaignBrandOptions.map((b) => ({ value: b.id, label: b.name })),
+              ...brands
+                .filter(b => !campaignBrandOptions.find(cb => cb.id === b.id))
+                .map((b) => ({ value: b.id, label: `${b.brand_name} (new)` })),
             ]}
           />
           <Select
