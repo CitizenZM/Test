@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { MessagePreview } from '@/components/outreach/message-preview';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { useToast, ToastContainer } from '@/components/ui/toast';
-import { Publisher, Outreach, MessageType, MANAGED_BRANDS } from '@/types';
+import { Publisher, Outreach, MessageType, type BrandWithProfile } from '@/types';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
@@ -33,11 +33,12 @@ function OutreachContent() {
   const { toasts, toast, removeToast } = useToast();
 
   const [publishers, setPublishers] = useState<Publisher[]>([]);
+  const [brands, setBrands] = useState<BrandWithProfile[]>([]);
   const [outreachList, setOutreachList] = useState<Outreach[]>([]);
   const [selectedPublisher, setSelectedPublisher] = useState(preselectedPublisher || '');
   const [channel, setChannel] = useState<'linkedin' | 'email'>('email');
   const [messageType, setMessageType] = useState<MessageType>('cold_intro');
-  const [brandId, setBrandId] = useState('tcl');
+  const [brandId, setBrandId] = useState('');
   const [generatedMessage, setGeneratedMessage] = useState('');
   const [generating, setGenerating] = useState(false);
   const [savingOutreach, setSavingOutreach] = useState(false);
@@ -45,15 +46,23 @@ function OutreachContent() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [pubRes, outRes] = await Promise.all([
+        const [pubRes, outRes, brandRes] = await Promise.all([
           fetch('/api/publishers?limit=200'),
           fetch('/api/outreach'),
+          fetch('/api/brands'),
         ]);
         if (pubRes.ok) {
           const data = await pubRes.json();
           setPublishers(Array.isArray(data) ? data : data.publishers || []);
         }
         if (outRes.ok) setOutreachList(await outRes.json());
+        if (brandRes.ok) {
+          const brandData = await brandRes.json();
+          if (Array.isArray(brandData)) {
+            setBrands(brandData);
+            if (brandData.length > 0 && !brandId) setBrandId(brandData[0].id);
+          }
+        }
       } catch {
         toast.error('Failed to load data');
       }
@@ -75,7 +84,7 @@ function OutreachContent() {
     setGenerating(true);
     toast.info('Generating personalized message...');
     try {
-      const brand = MANAGED_BRANDS.find(b => b.id === brandId);
+      const brand = brands.find(b => b.id === brandId);
       const res = await fetch('/api/outreach/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -84,7 +93,7 @@ function OutreachContent() {
           channel,
           message_type: messageType,
           brand_id: brandId,
-          brand_name: brand?.name,
+          brand_name: brand?.brand_name,
         }),
       });
       if (res.ok) {
@@ -147,7 +156,10 @@ function OutreachContent() {
               label="Brand"
               value={brandId}
               onChange={(e) => setBrandId(e.target.value)}
-              options={MANAGED_BRANDS.map((b) => ({ value: b.id, label: b.name }))}
+              options={[
+                { value: '', label: 'Select a brand...' },
+                ...brands.map((b) => ({ value: b.id, label: b.brand_name })),
+              ]}
             />
             <Select
               id="publisher-select"

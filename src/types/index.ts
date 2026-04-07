@@ -179,15 +179,24 @@ export interface Campaign {
   id: string;
   name: string;
   brand_id: string | null;
-  brand_name: string | null;
-  category: string | null;
-  campaign_type: CampaignType;
+  user_id?: string | null;
+  goal: string | null;
+  briefing_text: string | null;
+  reference_urls?: string[];
+  channels: string[];
+  languages: string[];
+  strategy?: Record<string, unknown> | null;
+  strategy_status?: string | null;
   status: CampaignStatus;
-  sequence: SequenceStep[];
-  target_criteria: TargetCriteria | null;
-  goals: CampaignGoals | null;
   created_at: string;
   updated_at: string;
+  // Legacy compat fields (may not exist in all DB schemas)
+  brand_name?: string | null;
+  category?: string | null;
+  campaign_type?: CampaignType;
+  sequence?: SequenceStep[];
+  target_criteria?: TargetCriteria | null;
+  goals?: CampaignGoals | null;
 }
 
 export interface TargetCriteria {

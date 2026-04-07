@@ -39,10 +39,12 @@ export async function POST(request: NextRequest) {
     .from('campaigns')
     .insert({
       name: body.name,
-      brand_name: body.brand_name || null,
-      category: body.category || null,
-      status: 'draft',
-      sequence: body.sequence || [],
+      brand_id: body.brand_id || null,
+      goal: body.goal || 'awareness',
+      briefing_text: body.briefing_text || body.description || null,
+      channels: body.channels || [],
+      languages: body.languages || ['en'],
+      status: body.status || 'draft',
     })
     .select()
     .single();

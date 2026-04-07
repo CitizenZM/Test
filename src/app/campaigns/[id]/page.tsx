@@ -5,41 +5,34 @@ import { Header } from '@/components/layout/header';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
 import { useToast, ToastContainer } from '@/components/ui/toast';
-import { Campaign, SequenceStep } from '@/types';
-import { ArrowLeft, Plus, Loader2, Play, Pause, Save } from 'lucide-react';
+import { Campaign, type BrandWithProfile } from '@/types';
+import { ArrowLeft, Loader2, Play, Pause, Copy, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-
-const actionLabels: Record<string, string> = {
-  connect: 'Connect',
-  message: 'Send Message',
-  follow_up: 'Follow Up',
-  email: 'Send Email',
-};
-
-const defaultSequence: SequenceStep[] = [
-  { step: 1, action: 'connect', channel: 'linkedin', day: 1 },
-  { step: 2, action: 'message', channel: 'linkedin', day: 3 },
-  { step: 3, action: 'follow_up', channel: 'linkedin', day: 7 },
-  { step: 4, action: 'email', channel: 'email', day: 14 },
-];
+import { formatDate } from '@/lib/utils';
 
 export default function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [brand, setBrand] = useState<BrandWithProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState(false);
   const { toasts, toast, removeToast } = useToast();
 
   useEffect(() => {
-    async function fetchCampaign() {
+    async function fetchData() {
       try {
         const res = await fetch(`/api/campaigns?id=${id}`);
         if (res.ok) {
           const data = await res.json();
-          setCampaign(Array.isArray(data) ? data[0] : data);
+          const c = Array.isArray(data) ? data[0] : data;
+          setCampaign(c);
+
+          // Fetch brand info
+          if (c?.brand_id) {
+            const brandRes = await fetch(`/api/brands/${c.brand_id}`);
+            if (brandRes.ok) setBrand(await brandRes.json());
+          }
         } else {
           toast.error('Failed to load campaign');
         }
@@ -49,42 +42,8 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         setLoading(false);
       }
     }
-    fetchCampaign();
+    fetchData();
   }, [id]);
-
-  function addStep() {
-    if (!campaign) return;
-    const seq = campaign.sequence || [];
-    const newStep: SequenceStep = {
-      step: seq.length + 1,
-      action: 'message',
-      channel: 'linkedin',
-      day: seq.length > 0 ? seq[seq.length - 1].day + 3 : 1,
-    };
-    setCampaign({ ...campaign, sequence: [...seq, newStep] });
-    toast.info('Step added. Click Save to persist changes.');
-  }
-
-  async function saveSequence() {
-    if (!campaign) return;
-    setSaving(true);
-    try {
-      const res = await fetch('/api/campaigns', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: campaign.id, sequence: campaign.sequence }),
-      });
-      if (res.ok) {
-        toast.success('Sequence saved successfully!');
-      } else {
-        toast.error('Failed to save sequence');
-      }
-    } catch {
-      toast.error('Network error saving sequence');
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function toggleStatus() {
     if (!campaign) return;
@@ -109,6 +68,12 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     }
   }
 
+  function copyStrategy() {
+    if (!campaign?.strategy) return;
+    navigator.clipboard.writeText(JSON.stringify(campaign.strategy, null, 2));
+    toast.success('Strategy JSON copied to clipboard');
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -126,14 +91,16 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     );
   }
 
-  const sequence = campaign.sequence?.length ? campaign.sequence : defaultSequence;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const strategy = campaign.strategy as Record<string, any> | null;
+  const channelRecs = strategy?.channel_recommendations as Record<string, { priority?: string; notes?: string; formats?: string[] }> | undefined;
 
   return (
     <>
       <ToastContainer toasts={toasts} onRemove={removeToast} />
       <Header
         title={campaign.name}
-        description={`${campaign.brand_name || 'No brand'} - ${campaign.category || 'Uncategorized'}`}
+        description={`${brand?.brand_name || 'No brand'} — ${campaign.goal || 'No goal'}`}
         actions={
           <div className="flex gap-3">
             <Link href="/campaigns">
@@ -155,80 +122,148 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
       />
 
       <div className="p-8 space-y-6">
-        <div className="grid grid-cols-4 gap-4">
-          <Card><p className="text-sm text-gray-500">Status</p><Badge variant={campaign.status === 'active' ? 'success' : 'default'} className="mt-1">{campaign.status}</Badge></Card>
-          <Card><p className="text-sm text-gray-500">Steps</p><p className="text-2xl font-bold mt-1">{sequence.length}</p></Card>
-          <Card><p className="text-sm text-gray-500">Duration</p><p className="text-2xl font-bold mt-1">{sequence.length > 0 ? sequence[sequence.length - 1].day : 0} days</p></Card>
-          <Card><p className="text-sm text-gray-500">Brand</p><p className="text-lg font-semibold mt-1">{campaign.brand_name || '-'}</p></Card>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <Card>
+            <p className="text-sm text-gray-500">Status</p>
+            <Badge variant={campaign.status === 'active' ? 'success' : campaign.status === 'paused' ? 'warning' : 'default'} className="mt-1">
+              {campaign.status}
+            </Badge>
+          </Card>
+          <Card>
+            <p className="text-sm text-gray-500">Goal</p>
+            <p className="text-lg font-semibold mt-1 capitalize">{campaign.goal || '-'}</p>
+          </Card>
+          <Card>
+            <p className="text-sm text-gray-500">Channels</p>
+            <div className="flex gap-1 flex-wrap mt-1">
+              {(campaign.channels || []).map(ch => (
+                <Badge key={ch} variant="info">{ch}</Badge>
+              ))}
+            </div>
+          </Card>
+          <Card>
+            <p className="text-sm text-gray-500">Brand</p>
+            <p className="text-lg font-semibold mt-1">{brand?.brand_name || '-'}</p>
+            {brand?.primary_domain && (
+              <a href={brand.primary_domain} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 flex items-center gap-1 hover:underline">
+                {brand.primary_domain} <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </Card>
         </div>
 
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <CardTitle>Automation Sequence</CardTitle>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={addStep}><Plus className="mr-1 h-4 w-4" /> Add Step</Button>
-              <Button size="sm" onClick={saveSequence} disabled={saving}>
-                {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
-                Save
-              </Button>
-            </div>
-          </div>
+        {/* Briefing */}
+        {campaign.briefing_text && (
+          <Card>
+            <CardTitle>Campaign Briefing</CardTitle>
+            <p className="mt-3 text-sm text-gray-700 whitespace-pre-line">{campaign.briefing_text}</p>
+          </Card>
+        )}
 
-          <div className="space-y-3">
-            {sequence.map((step, i) => (
-              <div key={i} className="flex items-center gap-4 rounded-lg border border-gray-200 p-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-600">
-                  {step.step}
-                </div>
-                <div className="flex-1 grid grid-cols-3 gap-4">
-                  <Select
-                    id={`action-${i}`}
-                    value={step.action}
-                    onChange={(e) => {
-                      const newSeq = [...sequence];
-                      newSeq[i] = { ...newSeq[i], action: e.target.value as SequenceStep['action'] };
-                      setCampaign({ ...campaign, sequence: newSeq });
-                    }}
-                    options={[
-                      { value: 'connect', label: 'Connect' },
-                      { value: 'message', label: 'Send Message' },
-                      { value: 'follow_up', label: 'Follow Up' },
-                      { value: 'email', label: 'Send Email' },
-                    ]}
-                  />
-                  <Select
-                    id={`channel-${i}`}
-                    value={step.channel}
-                    onChange={(e) => {
-                      const newSeq = [...sequence];
-                      newSeq[i] = { ...newSeq[i], channel: e.target.value as 'linkedin' | 'email' };
-                      setCampaign({ ...campaign, sequence: newSeq });
-                    }}
-                    options={[
-                      { value: 'linkedin', label: 'LinkedIn' },
-                      { value: 'email', label: 'Email' },
-                    ]}
-                  />
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">Day</span>
-                    <input
-                      type="number"
-                      value={step.day}
-                      onChange={(e) => {
-                        const newSeq = [...sequence];
-                        newSeq[i] = { ...newSeq[i], day: parseInt(e.target.value) || 1 };
-                        setCampaign({ ...campaign, sequence: newSeq });
-                      }}
-                      className="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
-                      min={1}
-                    />
-                  </div>
-                </div>
-                <Badge variant={step.channel === 'linkedin' ? 'info' : 'purple'}>
-                  {actionLabels[step.action]}
+        {/* Languages */}
+        {campaign.languages && campaign.languages.length > 0 && (
+          <Card>
+            <CardTitle>Languages</CardTitle>
+            <div className="flex gap-2 mt-3">
+              {campaign.languages.map(lang => (
+                <Badge key={lang} variant="default">{lang.toUpperCase()}</Badge>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* AI Strategy */}
+        {strategy && (
+          <Card>
+            <div className="flex items-center justify-between">
+              <CardTitle>AI Campaign Strategy</CardTitle>
+              <div className="flex gap-2">
+                <Badge variant={campaign.strategy_status === 'completed' ? 'success' : 'info'}>
+                  {campaign.strategy_status || 'generated'}
                 </Badge>
+                <Button variant="ghost" size="sm" onClick={copyStrategy}>
+                  <Copy className="h-3 w-3 mr-1" /> Copy JSON
+                </Button>
               </div>
-            ))}
+            </div>
+
+            {/* Content Strategy */}
+            {strategy.content_strategy && (
+              <div className="mt-4 space-y-2">
+                <h4 className="text-sm font-semibold text-gray-900">Content Strategy</h4>
+                <p className="text-sm text-gray-700">
+                  {String(strategy.content_strategy.key_angle || '')}
+                </p>
+                {Array.isArray(strategy.content_strategy.hook_themes) && (
+                  <div className="flex gap-2 flex-wrap">
+                    {strategy.content_strategy.hook_themes.map((theme: string, i: number) => (
+                      <Badge key={i} variant="default">{theme}</Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Audience Analysis */}
+            {strategy.audience_analysis && (
+              <div className="mt-4 space-y-2">
+                <h4 className="text-sm font-semibold text-gray-900">Audience Analysis</h4>
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Primary:</span> {String(strategy.audience_analysis.primary_segment || '')}
+                </p>
+                {strategy.audience_analysis.secondary_segment && (
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Secondary:</span> {String(strategy.audience_analysis.secondary_segment)}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Channel Recommendations */}
+            {channelRecs && (
+              <div className="mt-4 space-y-2">
+                <h4 className="text-sm font-semibold text-gray-900">Channel Recommendations</h4>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {Object.entries(channelRecs).map(([ch, info]) => (
+                    <div key={ch} className="rounded-lg border border-gray-100 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium capitalize">{ch}</span>
+                        <Badge variant={info.priority === 'high' ? 'success' : info.priority === 'medium' ? 'warning' : 'default'}>
+                          {info.priority || 'normal'}
+                        </Badge>
+                      </div>
+                      {info.notes && <p className="text-xs text-gray-500 mt-1">{info.notes}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Metadata */}
+        <Card>
+          <CardTitle>Details</CardTitle>
+          <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-gray-500">Created</p>
+              <p className="font-medium">{formatDate(campaign.created_at)}</p>
+            </div>
+            <div>
+              <p className="text-gray-500">Updated</p>
+              <p className="font-medium">{formatDate(campaign.updated_at)}</p>
+            </div>
+            <div>
+              <p className="text-gray-500">Campaign ID</p>
+              <p className="font-mono text-xs">{campaign.id}</p>
+            </div>
+            {campaign.user_id && (
+              <div>
+                <p className="text-gray-500">User ID</p>
+                <p className="font-mono text-xs">{campaign.user_id}</p>
+              </div>
+            )}
           </div>
         </Card>
       </div>
