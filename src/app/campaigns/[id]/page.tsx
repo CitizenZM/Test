@@ -47,7 +47,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
 
   async function toggleStatus() {
     if (!campaign) return;
-    const newStatus = campaign.status === 'active' ? 'paused' : 'active';
+    const newStatus = campaign.status === 'active' ? 'draft' : 'active';
     setToggling(true);
     try {
       const res = await fetch('/api/campaigns', {
@@ -57,7 +57,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
       });
       if (res.ok) {
         setCampaign({ ...campaign, status: newStatus });
-        toast.success(`Campaign ${newStatus === 'active' ? 'activated' : 'paused'}`);
+        toast.success(`Campaign ${newStatus === 'active' ? 'activated' : 'set to draft'}`);
       } else {
         toast.error('Failed to update campaign status');
       }
@@ -109,7 +109,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             {campaign.status === 'active' ? (
               <Button variant="secondary" onClick={toggleStatus} disabled={toggling}>
                 {toggling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pause className="mr-2 h-4 w-4" />}
-                Pause
+                Set Draft
               </Button>
             ) : (
               <Button onClick={toggleStatus} disabled={toggling}>
