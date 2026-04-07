@@ -35,11 +35,15 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient();
   const body = await request.json();
 
+  // Default user_id — in production this comes from auth session
+  const defaultUserId = '87b641eb-edfd-46b7-b7f4-1426cdac091e';
+
   const { data, error } = await supabase
     .from('campaigns')
     .insert({
       name: body.name,
       brand_id: body.brand_id || null,
+      user_id: body.user_id || defaultUserId,
       goal: body.goal || 'awareness',
       briefing_text: body.briefing_text || body.description || null,
       channels: body.channels || [],
