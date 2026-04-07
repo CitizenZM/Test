@@ -1,35 +1,45 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { getCachedSetting } from '@/lib/settings-cache';
 
 export const maxDuration = 60;
 
 export async function GET() {
   try {
-    const apiKey = getCachedSetting('OPENAI_API_KEY');
-    const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy || null;
+    // Use env var directly, not cache
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ ok: false, error: 'OPENAI_API_KEY env var not set' });
+    }
 
-    // Create client directly (no proxy logic)
-    const client = new OpenAI({ apiKey });
+    const keyLen = apiKey.length;
+    const keyTrimLen = apiKey.trim().length;
+    const hasNewline = apiKey.includes('\n');
+
+    // Create client with trimmed key
+    const client = new OpenAI({ apiKey: apiKey.trim() });
     const response = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       max_tokens: 20,
-      messages: [{ role: 'user', content: 'Say: Hello from AffiliateHunter' }],
+      messages: [{ role: 'user', content: 'Say: Hello' }],
     });
     return NextResponse.json({
       ok: true,
       message: response.choices[0]?.message?.content,
-      key_preview: apiKey ? `${apiKey.substring(0, 16)}...` : 'not set',
-      proxy_url: proxyUrl,
+      key_len: keyLen,
+      key_trim_len: keyTrimLen,
+      has_newline: hasNewline,
     });
   } catch (err) {
-    const apiKey = getCachedSetting('OPENAI_API_KEY');
+    const apiKey = process.env.OPENAI_API_KEY || '';
     return NextResponse.json({
       ok: false,
       error: err instanceof Error ? err.message : String(err),
-      key_preview: apiKey ? `${apiKey.substring(0, 16)}...` : 'not set',
-      proxy_url: process.env.HTTPS_PROXY || process.env.https_proxy || null,
-      stack: err instanceof Error ? err.stack?.split('\n').slice(0, 5) : undefined,
+      error_type: err?.constructor?.name,
+      key_len: apiKey.length,
+      key_trim_len: apiKey.trim().length,
+      has_newline: apiKey.includes('\n'),
+      key_start: apiKey.substring(0, 20),
+      key_end: apiKey.substring(apiKey.length - 10),
     }, { status: 500 });
   }
 }
