@@ -43,12 +43,13 @@ export const PipelineBoard = memo(function PipelineBoard({ outreachItems, onStat
                 {items.length}
               </span>
             </div>
-            <div className="space-y-2 rounded-2xl bg-slate-50/80 p-2.5 min-h-[200px] border border-slate-100">
+            <div className="space-y-2 rounded-2xl bg-slate-50/80 p-2.5 min-h-[200px] border border-slate-100" role="list" aria-label={stage.label}>
               {items.map((item) => (
                 <div
                   key={item.id}
                   draggable
                   onDragStart={(e) => handleDragStart(e, item.id)}
+                  role="listitem"
                 >
                   <PipelineCard outreach={item} />
                 </div>

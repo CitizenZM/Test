@@ -26,6 +26,7 @@ function CopyEmailButton({ email }: { email: string }) {
       onClick={handleCopy}
       className="ml-1 rounded-md p-0.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
       title="Copy email"
+      aria-label="Copy email address"
     >
       {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
     </button>
@@ -65,7 +66,7 @@ export const PublisherTable = memo(function PublisherTable({ publishers }: Publi
                 </p>
                 {pub.domain && (
                   <p className="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
-                    {pub.domain} <ExternalLink className="h-3 w-3" />
+                    {pub.domain} <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   </p>
                 )}
               </Link>

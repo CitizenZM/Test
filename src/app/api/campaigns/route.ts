@@ -24,8 +24,7 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false });
 
   if (error) {
-    // Table may not exist yet
-    return NextResponse.json([]);
+    return NextResponse.json({ error: error?.message || 'Failed to load campaigns' }, { status: 500 });
   }
 
   return NextResponse.json(data || []);

@@ -29,7 +29,7 @@ export function MessagePreview({ message, channel, subject }: MessagePreviewProp
             {channel === 'linkedin' ? 'LinkedIn Message' : 'Email'}
           </Badge>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleCopy}>
+        <Button variant="ghost" size="sm" onClick={handleCopy} aria-label="Copy message to clipboard">
           {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
           {copied ? 'Copied' : 'Copy'}
         </Button>

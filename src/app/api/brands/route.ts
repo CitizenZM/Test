@@ -34,7 +34,7 @@ export async function GET() {
     .limit(50);
 
   if (error) {
-    return NextResponse.json([]);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   const brands = (data || []).map(unpackBrand);

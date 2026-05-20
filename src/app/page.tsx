@@ -34,6 +34,27 @@ interface DashboardStats {
   activePartners: number;
 }
 
+const QUICK_ACTIONS = [
+  { label: 'Find Publishers', href: '/publishers', icon: Search, desc: 'AI-powered discovery', gradient: 'from-blue-500 to-blue-600' },
+  { label: 'Create Outreach', href: '/outreach', icon: Mail, desc: 'Generate personalized messages', gradient: 'from-violet-500 to-purple-600' },
+  { label: 'New Campaign', href: '/campaigns', icon: Target, desc: 'Launch recruitment campaign', gradient: 'from-amber-500 to-orange-500' },
+  { label: 'View Pipeline', href: '/pipeline', icon: BarChart3, desc: 'Track partner progress', gradient: 'from-emerald-500 to-green-600' },
+] as const;
+
+const STRATEGY_COLORS = [
+  { bg: 'bg-blue-50/80', border: 'border-blue-100', title: 'text-blue-800', sub: 'text-blue-600', kw: 'text-blue-500' },
+  { bg: 'bg-teal-50/80', border: 'border-teal-100', title: 'text-teal-800', sub: 'text-teal-600', kw: 'text-teal-500' },
+  { bg: 'bg-amber-50/80', border: 'border-amber-100', title: 'text-amber-800', sub: 'text-amber-600', kw: 'text-amber-500' },
+  { bg: 'bg-violet-50/80', border: 'border-violet-100', title: 'text-violet-800', sub: 'text-violet-600', kw: 'text-violet-500' },
+  { bg: 'bg-pink-50/80', border: 'border-pink-100', title: 'text-pink-800', sub: 'text-pink-600', kw: 'text-pink-500' },
+];
+
+const FALLBACK_BRANDS = [
+  { name: 'TCL', cat: 'Consumer Electronics', desc: 'TVs, Monitors, Tablets, Phones', target: 'Tech editorial, gaming, deal sites' },
+  { name: 'Levoit', cat: 'Home Appliances', desc: 'Air Purifiers, Humidifiers, Vacuums', target: 'Home, health, pet, deal sites' },
+  { name: 'Insta360', cat: 'Action Cameras', desc: '360° Cameras, Action Cams, AI Editing', target: 'Content creators, tech reviewers' },
+];
+
 const statConfig = [
   { key: 'leadsDiscovered' as const, label: 'Leads Discovered', icon: Users, gradient: 'from-blue-500 to-blue-600', bg: 'bg-blue-50', text: 'text-blue-600', sub: 'publisher database' },
   { key: 'outreachSent' as const, label: 'Outreach Sent', icon: Mail, gradient: 'from-indigo-500 to-indigo-600', bg: 'bg-indigo-50', text: 'text-indigo-600', sub: 'all channels' },
@@ -192,12 +213,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-1">
           <CardTitle className="mb-5">Quick Actions</CardTitle>
           <div className="space-y-2.5">
-            {[
-              { label: 'Find Publishers', href: '/publishers', icon: Search, desc: 'AI-powered discovery', gradient: 'from-blue-500 to-blue-600' },
-              { label: 'Create Outreach', href: '/outreach', icon: Mail, desc: 'Generate personalized messages', gradient: 'from-violet-500 to-purple-600' },
-              { label: 'New Campaign', href: '/campaigns', icon: Target, desc: 'Launch recruitment campaign', gradient: 'from-amber-500 to-orange-500' },
-              { label: 'View Pipeline', href: '/pipeline', icon: BarChart3, desc: 'Track partner progress', gradient: 'from-emerald-500 to-green-600' },
-            ].map((action) => (
+            {QUICK_ACTIONS.map((action) => (
               <Link key={action.href} href={action.href}>
                 <div className="flex items-center gap-3.5 rounded-xl border border-slate-100 p-3.5 hover:bg-slate-50 hover:border-slate-200 transition-all duration-200 cursor-pointer group">
                   <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${action.gradient} shadow-sm`}>
@@ -234,13 +250,7 @@ export default function DashboardPage() {
                 return p?.recruitment_strategy;
               });
 
-              const gradients = [
-                { bg: 'bg-blue-50/80', border: 'border-blue-100', title: 'text-blue-800', sub: 'text-blue-600', kw: 'text-blue-500' },
-                { bg: 'bg-teal-50/80', border: 'border-teal-100', title: 'text-teal-800', sub: 'text-teal-600', kw: 'text-teal-500' },
-                { bg: 'bg-amber-50/80', border: 'border-amber-100', title: 'text-amber-800', sub: 'text-amber-600', kw: 'text-amber-500' },
-                { bg: 'bg-violet-50/80', border: 'border-violet-100', title: 'text-violet-800', sub: 'text-violet-600', kw: 'text-violet-500' },
-                { bg: 'bg-pink-50/80', border: 'border-pink-100', title: 'text-pink-800', sub: 'text-pink-600', kw: 'text-pink-500' },
-              ];
+              const gradients = STRATEGY_COLORS;
 
               if (brandsWithStrategy.length > 0) {
                 return brandsWithStrategy.map((brand, i) => {
@@ -274,11 +284,7 @@ export default function DashboardPage() {
 
               return (
                 <>
-                  {[
-                    { name: 'TCL', cat: 'Consumer Electronics', desc: 'TVs, Monitors, Tablets, Phones', target: 'Tech editorial, gaming, deal sites' },
-                    { name: 'Levoit', cat: 'Home Appliances', desc: 'Air Purifiers, Humidifiers, Vacuums', target: 'Home, health, pet, deal sites' },
-                    { name: 'Insta360', cat: 'Action Cameras', desc: '360° Cameras, Action Cams, AI Editing', target: 'Content creators, tech reviewers' },
-                  ].map((brand, i) => {
+                  {FALLBACK_BRANDS.map((brand, i) => {
                     const c = gradients[i];
                     return (
                       <div key={brand.name} className={`rounded-xl ${c.bg} border ${c.border} p-3.5`}>
