@@ -5,7 +5,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, Mail, Linkedin, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 
 interface PublisherTableProps {
   publishers: Publisher[];
@@ -32,7 +32,7 @@ function CopyEmailButton({ email }: { email: string }) {
   );
 }
 
-export function PublisherTable({ publishers }: PublisherTableProps) {
+export const PublisherTable = memo(function PublisherTable({ publishers }: PublisherTableProps) {
   if (publishers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-16">
@@ -137,4 +137,4 @@ export function PublisherTable({ publishers }: PublisherTableProps) {
       </TableBody>
     </Table>
   );
-}
+});

@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
+import { memo } from 'react';
 
 interface StatCardProps {
   title: string;
@@ -10,7 +11,7 @@ interface StatCardProps {
   iconColor?: string;
 }
 
-export function StatCard({ title, value, change, changeType = 'neutral', icon: Icon, iconColor = 'text-indigo-600 bg-indigo-50' }: StatCardProps) {
+export const StatCard = memo(function StatCard({ title, value, change, changeType = 'neutral', icon: Icon, iconColor = 'text-indigo-600 bg-indigo-50' }: StatCardProps) {
   return (
     <div className="group rounded-2xl border border-slate-200/60 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-all duration-300">
       <div className="flex items-start justify-between">
@@ -36,4 +37,4 @@ export function StatCard({ title, value, change, changeType = 'neutral', icon: I
       </div>
     </div>
   );
-}
+});

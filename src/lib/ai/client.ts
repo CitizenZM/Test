@@ -19,7 +19,6 @@ function createProxyFetch(proxyUrl: string): typeof globalThis.fetch | undefined
   }
 }
 
-// Don't cache the client globally — re-create when the key changes
 export function getOpenAIClient(): OpenAI {
   const apiKey = getCachedSetting('OPENAI_API_KEY');
   if (!apiKey) {
@@ -34,9 +33,9 @@ export function getOpenAIClient(): OpenAI {
   if (proxyUrl) {
     const proxyFetch = createProxyFetch(proxyUrl);
     if (proxyFetch) {
-      return new OpenAI({ apiKey, fetch: proxyFetch });
+      return new OpenAI({ apiKey, fetch: proxyFetch, timeout: 55_000, maxRetries: 2 });
     }
   }
 
-  return new OpenAI({ apiKey });
+  return new OpenAI({ apiKey, timeout: 55_000, maxRetries: 2 });
 }

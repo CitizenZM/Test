@@ -82,15 +82,19 @@ Return ONLY a JSON object with this exact structure. For all text fields, provid
   const response = await client.chat.completions.create({
     model: 'gpt-4o-mini',
     max_tokens: 8192,
-    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: 'You return valid JSON only.' },
+      { role: 'user', content: prompt },
+    ],
   });
 
   const text = response.choices[0]?.message?.content || '{}';
 
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return getDefaultStrategy();
-    return JSON.parse(jsonMatch[0]) as RecruitmentStrategy;
+    const parsed = JSON.parse(text) as RecruitmentStrategy;
+    if (!parsed.target_categories?.length) return getDefaultStrategy();
+    return parsed;
   } catch {
     return getDefaultStrategy();
   }

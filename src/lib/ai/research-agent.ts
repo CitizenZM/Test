@@ -55,29 +55,32 @@ Return exactly 10 publisher recommendations as a JSON array. Each publisher shou
 - description: Brief description of their target audience and content
 - summary_note: Why they'd be a good affiliate partner
 
-Return ONLY the JSON array, no other text.`;
+Return ONLY a JSON object with key "publishers" containing the array, no other text.`;
 
   const response = await client.chat.completions.create({
     model: 'gpt-4o-mini',
     max_tokens: 4096,
-    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: 'You return valid JSON only.' },
+      { role: 'user', content: prompt },
+    ],
   });
 
-  const text = response.choices[0]?.message?.content || '';
+  const text = response.choices[0]?.message?.content || '{}';
 
   try {
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return [];
-    const publishers = JSON.parse(jsonMatch[0]);
-    return publishers.map((p: Record<string, unknown>) => ({
-      publisher_name: p.publisher_name as string,
-      website: p.website as string,
-      category: p.category as string,
-      affiliate_type: p.affiliate_type as string,
-      estimated_monthly_visits: p.estimated_monthly_visits as number,
-      affiliate_friendly: p.affiliate_friendly as boolean,
-      description: p.description as string,
-      summary_note: p.summary_note as string,
+    const parsed = JSON.parse(text);
+    const publishers: Record<string, unknown>[] = Array.isArray(parsed) ? parsed : parsed.publishers || [];
+    return publishers.map((p) => ({
+      publisher_name: String(p.publisher_name || ''),
+      website: String(p.website || ''),
+      category: String(p.category || ''),
+      affiliate_type: String(p.affiliate_type || ''),
+      estimated_monthly_visits: Number(p.estimated_monthly_visits) || 0,
+      affiliate_friendly: Boolean(p.affiliate_friendly),
+      description: String(p.description || ''),
+      summary_note: String(p.summary_note || ''),
     }));
   } catch {
     return [];

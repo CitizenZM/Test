@@ -3,13 +3,14 @@
 import { Outreach, PIPELINE_STAGES, OutreachStatus } from '@/types';
 import { PipelineCard } from './pipeline-card';
 import { cn } from '@/lib/utils';
+import { memo } from 'react';
 
 interface PipelineBoardProps {
   outreachItems: Outreach[];
   onStatusChange: (id: string, newStatus: OutreachStatus) => void;
 }
 
-export function PipelineBoard({ outreachItems, onStatusChange }: PipelineBoardProps) {
+export const PipelineBoard = memo(function PipelineBoard({ outreachItems, onStatusChange }: PipelineBoardProps) {
   function handleDragStart(e: React.DragEvent, id: string) {
     e.dataTransfer.setData('text/plain', id);
   }
@@ -61,4 +62,4 @@ export function PipelineBoard({ outreachItems, onStatusChange }: PipelineBoardPr
       })}
     </div>
   );
-}
+});

@@ -52,15 +52,17 @@ Return ONLY a JSON object with these fields:
   const response = await client.chat.completions.create({
     model: 'gpt-4o-mini',
     max_tokens: 1024,
-    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: 'You return valid JSON only.' },
+      { role: 'user', content: prompt },
+    ],
   });
 
   const text = response.choices[0]?.message?.content || '{}';
 
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return { publisher_score: 50, affiliate_fit_score: 50, traffic_score: 50, analysis: 'Analysis unavailable.' };
-    return JSON.parse(jsonMatch[0]);
+    return JSON.parse(text) as ScoreResult;
   } catch {
     return { publisher_score: 50, affiliate_fit_score: 50, traffic_score: 50, analysis: 'Analysis unavailable.' };
   }

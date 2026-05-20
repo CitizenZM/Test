@@ -3,13 +3,14 @@
 import { Outreach } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Globe, Mail, Linkedin } from 'lucide-react';
+import { memo } from 'react';
 
 interface PipelineCardProps {
   outreach: Outreach;
   onClick?: () => void;
 }
 
-export function PipelineCard({ outreach, onClick }: PipelineCardProps) {
+export const PipelineCard = memo(function PipelineCard({ outreach, onClick }: PipelineCardProps) {
   const publisher = outreach.publisher;
 
   return (
@@ -34,4 +35,4 @@ export function PipelineCard({ outreach, onClick }: PipelineCardProps) {
       </div>
     </div>
   );
-}
+});
