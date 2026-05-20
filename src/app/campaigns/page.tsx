@@ -54,8 +54,6 @@ export default function CampaignsPage() {
       setCampaigns(campaigns);
       setBrands(Array.isArray(brandData) ? brandData : []);
 
-      // Extract brand IDs from existing campaigns for the FK-compatible list
-      const campaignBrandIds = new Set(campaigns.map((c: Campaign) => c.brand_id).filter(Boolean));
       setCampaignBrandOptions(
         campaigns
           .filter((c: Campaign) => c.brand_id)

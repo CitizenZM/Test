@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/select';
 import { PublisherTable } from '@/components/publishers/publisher-table';
 import { Badge } from '@/components/ui/badge';
 import { useToast, ToastContainer } from '@/components/ui/toast';
-import { cn } from '@/lib/utils';
+import { cn, debounce } from '@/lib/utils';
 import {
   Publisher,
   PUBLISHER_CATEGORIES,
@@ -82,6 +82,11 @@ function PublishersPageInner() {
   const [bulkDiscovering, setBulkDiscovering] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; found: number; tasks_run?: number } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+
+  const debouncedSetSearchQuery = useMemo(
+    () => debounce((val: string) => { setSearchQuery(val); setPage(0); }, 400),
+    []
+  );
 
   // Brand profile integration
   const [brands, setBrands] = useState<BrandWithProfile[]>([]);
@@ -172,11 +177,7 @@ function PublishersPageInner() {
     setPage(0);
   }
 
-  useEffect(() => {
-    fetchPublishers();
-  }, [page, category, tier, network, hasEmail, searchQuery]);
-
-  async function fetchPublishers() {
+  const fetchPublishers = useCallback(async function fetchPublishers() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -203,7 +204,11 @@ function PublishersPageInner() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [page, category, tier, network, hasEmail, searchQuery]);
+
+  useEffect(() => {
+    fetchPublishers();
+  }, [fetchPublishers]);
 
   async function handleDiscover() {
     const searchKeyword = keyword;
@@ -239,9 +244,8 @@ function PublishersPageInner() {
         const errData = await res.json().catch(() => ({}));
         toast.error(errData.error || `Discovery failed (${res.status}). Check your OpenAI API key in Settings.`);
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error during discovery. Please try again.');
-      console.error('Discovery error:', err);
     } finally {
       setDiscovering(false);
     }
@@ -276,9 +280,8 @@ function PublishersPageInner() {
         const errData = await res.json().catch(() => ({}));
         toast.error(errData.error || 'Bulk discovery failed');
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error during bulk discovery. Please try again.');
-      console.error('Bulk discovery error:', err);
     } finally {
       setBulkDiscovering(false);
     }
@@ -502,7 +505,7 @@ function PublishersPageInner() {
             <Input
               placeholder="e.g. action camera, 360 camera review"
               value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
+              onChange={(e) => { setKeyword(e.target.value); debouncedSetSearchQuery(e.target.value); }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();

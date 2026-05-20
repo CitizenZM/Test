@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         const deployment = await triggerRedeploy();
         deploymentUrl = deployment?.url || null;
       } catch (err) {
-        console.warn('Vercel persistence failed:', err);
+        // Vercel persistence failed — non-critical, key is cached in memory
       }
     }
 

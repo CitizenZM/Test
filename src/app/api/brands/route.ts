@@ -30,14 +30,17 @@ export async function GET() {
   const { data, error } = await supabase
     .from('brands')
     .select('*, brand_profiles(*)')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(50);
 
   if (error) {
     return NextResponse.json([]);
   }
 
   const brands = (data || []).map(unpackBrand);
-  return NextResponse.json(brands);
+  return NextResponse.json(brands, {
+    headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+  });
 }
 
 export async function POST(request: NextRequest) {

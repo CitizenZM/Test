@@ -41,8 +41,6 @@ export async function GET(request: NextRequest) {
   const { data, error, count } = await query;
 
   if (error) {
-    // Return error details for debugging
-    console.error('Publishers query error:', error.message);
     return NextResponse.json({ publishers: [], total: 0, error: error.message }, { status: 500 });
   }
 

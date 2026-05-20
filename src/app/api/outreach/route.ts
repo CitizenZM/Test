@@ -6,8 +6,9 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('outreach')
-    .select('*, publisher:publishers(*)')
-    .order('created_at', { ascending: false });
+    .select('*, publisher:publishers(id,publisher_name,domain)')
+    .order('created_at', { ascending: false })
+    .limit(100);
 
   if (error) {
     // Table may not exist yet

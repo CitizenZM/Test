@@ -34,5 +34,7 @@ export async function GET() {
     activePartners: active.length,
     replyRate,
     partnerConversion,
+  }, {
+    headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
   });
 }

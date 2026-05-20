@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import { Card, CardTitle } from '@/components/ui/card';
@@ -44,11 +44,7 @@ export default function BrandsPage() {
   ]);
   const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    fetchBrands();
-  }, []);
-
-  async function fetchBrands() {
+  const fetchBrands = useCallback(async function fetchBrands() {
     try {
       const res = await fetch('/api/brands');
       if (res.ok) {
@@ -62,7 +58,12 @@ export default function BrandsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    fetchBrands();
+  }, [fetchBrands]);
 
   function addCompetitor() {
     if (formCompetitors.length < 5) {
@@ -123,9 +124,8 @@ export default function BrandsPage() {
         const errData = await res.json().catch(() => ({}));
         toast.error(errData.error || `Failed to create brand (${res.status})`);
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error creating brand. Please try again.');
-      console.error('Brand creation error:', err);
     } finally {
       setCreating(false);
     }
