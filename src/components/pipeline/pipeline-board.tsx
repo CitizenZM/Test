@@ -25,7 +25,7 @@ export function PipelineBoard({ outreachItems, onStatusChange }: PipelineBoardPr
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex gap-4 overflow-x-auto pb-4 px-1">
       {PIPELINE_STAGES.map((stage) => {
         const items = outreachItems.filter((o) => o.status === stage.key);
         return (
@@ -35,14 +35,14 @@ export function PipelineBoard({ outreachItems, onStatusChange }: PipelineBoardPr
             onDrop={(e) => handleDrop(e, stage.key)}
             onDragOver={handleDragOver}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <div className={cn('h-2.5 w-2.5 rounded-full', stage.color)} />
-              <h3 className="text-sm font-semibold text-gray-700">{stage.label}</h3>
-              <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <div className={cn('h-2 w-2 rounded-full', stage.color)} />
+              <h3 className="text-[13px] font-semibold text-slate-700">{stage.label}</h3>
+              <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
                 {items.length}
               </span>
             </div>
-            <div className="space-y-2 rounded-lg bg-gray-50 p-2 min-h-[200px]">
+            <div className="space-y-2 rounded-2xl bg-slate-50/80 p-2.5 min-h-[200px] border border-slate-100">
               {items.map((item) => (
                 <div
                   key={item.id}
@@ -53,7 +53,7 @@ export function PipelineBoard({ outreachItems, onStatusChange }: PipelineBoardPr
                 </div>
               ))}
               {items.length === 0 && (
-                <p className="text-center text-xs text-gray-400 py-8">Drop here</p>
+                <p className="text-center text-[11px] text-slate-400 py-8 font-medium">Drop here</p>
               )}
             </div>
           </div>

@@ -12,6 +12,7 @@ import {
   Settings,
   Zap,
   Building2,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MANAGED_BRANDS } from '@/types';
@@ -30,37 +31,42 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-screen w-64 flex-col bg-gray-900 text-white">
-      <div className="flex h-16 items-center gap-2 px-6 border-b border-gray-800">
-        <Zap className="h-6 w-6 text-indigo-400" />
-        <span className="text-lg font-bold">AffiliateHunter</span>
-        <span className="text-xs text-indigo-400 font-medium">AI</span>
+    <aside className="flex h-screen w-[260px] flex-col bg-[#0f1225] text-white">
+      <div className="flex h-16 items-center gap-2.5 px-5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
+          <Zap className="h-5 w-5 text-white" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-[15px] font-bold tracking-tight">AffiliateHunter</span>
+          <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-widest">AI Platform</span>
+        </div>
       </div>
 
-      {/* Brand Selector */}
-      <div className="px-3 py-3 border-b border-gray-800">
-        <div className="flex items-center gap-2 px-3 py-1.5">
-          <Building2 className="h-4 w-4 text-gray-400" />
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Managed Brands</span>
-        </div>
-        <div className="mt-1 space-y-0.5">
+      <div className="mx-4 my-2 h-px bg-white/[0.06]" />
+
+      <div className="px-3 py-2">
+        <p className="px-3 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Brands</p>
+        <div className="space-y-0.5">
           {MANAGED_BRANDS.map((brand) => (
             <div
               key={brand.id}
-              className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-gray-300"
+              className="flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-[13px] text-slate-400 hover:text-slate-300 hover:bg-white/[0.04] transition-colors cursor-default"
             >
               <div
                 className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: brand.color }}
+                style={{ backgroundColor: brand.color, boxShadow: `0 0 0 2px #0f1225, 0 0 0 3px ${brand.color}40` }}
               />
-              <span>{brand.name}</span>
-              <span className="ml-auto text-gray-500 text-[10px]">{brand.category}</span>
+              <span className="font-medium">{brand.name}</span>
+              <span className="ml-auto text-[10px] text-slate-600">{brand.category}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <div className="mx-4 my-2 h-px bg-white/[0.06]" />
+
+      <nav className="flex-1 space-y-0.5 px-3 py-2">
+        <p className="px-3 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Menu</p>
         {navigation.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -70,25 +76,33 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
               )}
             >
-              <item.icon className="h-5 w-5" />
-              {item.name}
+              <item.icon className={cn('h-[18px] w-[18px]', isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300')} />
+              <span>{item.name}</span>
+              {isActive && <ChevronRight className="ml-auto h-3.5 w-3.5 text-white/60" />}
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-gray-800 p-3">
+      <div className="mx-4 mb-2 h-px bg-white/[0.06]" />
+
+      <div className="px-3 pb-4">
         <Link
           href="/settings"
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+          className={cn(
+            'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200',
+            pathname === '/settings'
+              ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+              : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+          )}
         >
-          <Settings className="h-5 w-5" />
+          <Settings className={cn('h-[18px] w-[18px]', pathname === '/settings' ? 'text-white' : 'text-slate-500 group-hover:text-slate-300')} />
           Settings
         </Link>
       </div>

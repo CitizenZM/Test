@@ -311,9 +311,9 @@ function PublishersPageInner() {
         }
       />
 
-      <div className="p-8 space-y-6">
+      <div className="p-8 space-y-6 animate-fade-in">
         {/* Brand Profile Selector */}
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-5 shadow-sm">
+        <div className="rounded-2xl border border-indigo-200/60 bg-gradient-to-r from-indigo-50/80 to-violet-50/40 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2 shrink-0">
               <Building2 className="h-5 w-5 text-indigo-600" />
@@ -375,7 +375,7 @@ function PublishersPageInner() {
 
           {/* No strategy warning */}
           {brandHasNoStrategy && (
-            <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 p-3 flex items-center gap-3">
+            <div className="mt-3 rounded-xl bg-amber-50/80 border border-amber-200/60 p-3 flex items-center gap-3">
               <span className="text-sm text-amber-800">
                 No strategy generated for this brand yet.
               </span>
@@ -390,7 +390,7 @@ function PublishersPageInner() {
 
         {/* Strategy Summary Panel */}
         {showStrategyPanel && activeStrategy && (
-          <div className="rounded-xl border border-indigo-100 bg-white p-6 shadow-sm space-y-4">
+          <div className="rounded-2xl border border-indigo-100/60 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                 <Target className="h-4 w-4 text-indigo-600" />
@@ -486,7 +486,7 @@ function PublishersPageInner() {
         )}
 
         {/* AI Discovery Section */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-gray-900">
               AI Publisher Discovery
@@ -590,7 +590,7 @@ function PublishersPageInner() {
 
         {/* Bulk Discovery Progress */}
         {bulkDiscovering && (
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 flex items-center gap-4">
+          <div className="rounded-2xl border border-indigo-200/60 bg-indigo-50/80 p-4 flex items-center gap-4">
             <Loader2 className="h-5 w-5 animate-spin text-indigo-600 shrink-0" />
             <div className="flex-1">
               <p className="text-sm font-medium text-indigo-900">
@@ -608,7 +608,7 @@ function PublishersPageInner() {
 
         {/* Bulk Discovery Result */}
         {!bulkDiscovering && bulkProgress && bulkProgress.found > 0 && (
-          <div className="rounded-xl border border-green-200 bg-green-50 p-4 flex items-center justify-between">
+          <div className="rounded-2xl border border-emerald-200/60 bg-emerald-50/80 p-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-green-900">
                 Bulk Discovery Complete — {bulkProgress.found} new publishers added
@@ -622,7 +622,7 @@ function PublishersPageInner() {
         )}
 
         {showFilters && (
-          <div className="rounded-lg border border-gray-200 bg-white p-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="rounded-2xl border border-slate-200/60 bg-white p-4 grid grid-cols-2 gap-4 md:grid-cols-4">
             <Select
               id="network-filter"
               label="Network"

@@ -207,7 +207,7 @@ export default function BrandDetailPage() {
         }
       />
 
-      <div className="p-8">
+      <div className="p-8 animate-fade-in">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Section A: Advertiser Profile */}
           <div className="space-y-6">

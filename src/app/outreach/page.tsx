@@ -147,7 +147,7 @@ function OutreachContent() {
       <ToastContainer toasts={toasts} onRemove={removeToast} />
       <Header title="AI Outreach" description="Generate brand-personalized outreach messages with AI" />
 
-      <div className="p-8 space-y-6">
+      <div className="p-8 space-y-6 animate-fade-in">
         <Card>
           <CardTitle>Message Generator</CardTitle>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5">

@@ -121,11 +121,11 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         }
       />
 
-      <div className="p-8 space-y-6">
+      <div className="p-8 space-y-6 animate-fade-in">
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Card>
-            <p className="text-sm text-gray-500">Status</p>
+            <p className="text-sm text-slate-500">Status</p>
             <Badge variant={campaign.status === 'active' ? 'success' : campaign.status === 'paused' ? 'warning' : 'default'} className="mt-1">
               {campaign.status}
             </Badge>

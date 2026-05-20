@@ -144,7 +144,7 @@ export default function CampaignsPage() {
         }
       />
 
-      <div className="p-8">
+      <div className="p-8 animate-fade-in">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />

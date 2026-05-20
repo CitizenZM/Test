@@ -99,7 +99,7 @@ export default function PublisherDetailPage({ params }: { params: Promise<{ id: 
         }
       />
 
-      <div className="p-8 space-y-6">
+      <div className="p-8 space-y-6 animate-fade-in">
         <PublisherCard publisher={publisher} />
 
         {editors.length > 0 && (

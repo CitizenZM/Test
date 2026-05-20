@@ -49,14 +49,14 @@ const icons = {
 };
 
 const styles = {
-  success: 'bg-green-50 border-green-200 text-green-800',
-  error: 'bg-red-50 border-red-200 text-red-800',
-  warning: 'bg-amber-50 border-amber-200 text-amber-800',
-  info: 'bg-blue-50 border-blue-200 text-blue-800',
+  success: 'bg-emerald-50 border-emerald-200/60 text-emerald-800',
+  error: 'bg-red-50 border-red-200/60 text-red-800',
+  warning: 'bg-amber-50 border-amber-200/60 text-amber-800',
+  info: 'bg-blue-50 border-blue-200/60 text-blue-800',
 };
 
 const iconStyles = {
-  success: 'text-green-500',
+  success: 'text-emerald-500',
   error: 'text-red-500',
   warning: 'text-amber-500',
   info: 'text-blue-500',
@@ -84,13 +84,13 @@ function ToastItem({ toast: t, onRemove }: { toast: Toast; onRemove: (id: number
 
   return (
     <div
-      className={`flex items-start gap-3 rounded-lg border p-4 shadow-lg transition-all duration-300 ${styles[t.type]} ${
+      className={`flex items-start gap-3 rounded-2xl border p-4 shadow-xl shadow-slate-900/5 backdrop-blur-sm transition-all duration-300 ${styles[t.type]} ${
         show ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
       }`}
     >
       <Icon className={`h-5 w-5 shrink-0 mt-0.5 ${iconStyles[t.type]}`} />
-      <p className="text-sm flex-1">{t.message}</p>
-      <button onClick={() => onRemove(t.id)} className="shrink-0 opacity-60 hover:opacity-100">
+      <p className="text-[13px] font-medium flex-1">{t.message}</p>
+      <button onClick={() => onRemove(t.id)} className="shrink-0 opacity-60 hover:opacity-100 transition-opacity">
         <X className="h-4 w-4" />
       </button>
     </div>

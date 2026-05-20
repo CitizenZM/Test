@@ -157,7 +157,7 @@ export default function SettingsPage() {
       <ToastContainer toasts={toasts} onRemove={removeToast} />
       <Header title="Settings" description="Configure integrations and preferences" />
 
-      <div className="p-8 space-y-6 max-w-4xl">
+      <div className="p-8 space-y-6 max-w-4xl animate-fade-in">
         {/* AI Configuration — most important section */}
         <Card>
           <div className="flex items-center gap-3 mb-1">

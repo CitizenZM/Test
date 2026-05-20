@@ -30,18 +30,18 @@ export function MessagePreview({ message, channel, subject }: MessagePreviewProp
           </Badge>
         </div>
         <Button variant="ghost" size="sm" onClick={handleCopy}>
-          {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+          {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
           {copied ? 'Copied' : 'Copy'}
         </Button>
       </div>
       {subject && (
         <div className="mb-3">
-          <p className="text-xs font-medium text-gray-500">Subject</p>
-          <p className="text-sm font-medium text-gray-900">{subject}</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Subject</p>
+          <p className="text-sm font-semibold text-slate-800 mt-0.5">{subject}</p>
         </div>
       )}
-      <div className="rounded-lg bg-gray-50 p-4">
-        <p className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed">{message}</p>
+      <div className="rounded-xl bg-slate-50/80 border border-slate-100 p-5">
+        <p className="whitespace-pre-wrap text-[13px] text-slate-700 leading-relaxed">{message}</p>
       </div>
     </Card>
   );
