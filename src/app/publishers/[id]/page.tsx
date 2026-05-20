@@ -69,7 +69,7 @@ export default function PublisherDetailPage({ params }: { params: Promise<{ id: 
   if (!publisher) {
     return (
       <div className="flex flex-col items-center justify-center h-96">
-        <p className="text-gray-500">Publisher not found</p>
+        <p className="text-slate-500">Publisher not found</p>
         <Link href="/publishers" className="mt-4 text-indigo-600 hover:underline">Back to publishers</Link>
       </div>
     );
@@ -107,19 +107,19 @@ export default function PublisherDetailPage({ params }: { params: Promise<{ id: 
             <CardTitle>Editor Contacts</CardTitle>
             <div className="mt-4 space-y-3">
               {editors.map((editor) => (
-                <div key={editor.id} className="flex items-start justify-between rounded-lg border border-gray-100 p-3">
+                <div key={editor.id} className="flex items-start justify-between rounded-xl border border-slate-100 p-3">
                   <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-indigo-50 p-2">
+                    <div className="rounded-full bg-indigo-50 p-2 rounded-xl">
                       <User className="h-4 w-4 text-indigo-600" />
                     </div>
                     <div>
                       <p className="font-medium text-sm">{editor.editor_name}</p>
-                      {editor.role && <p className="text-xs text-gray-500">{editor.role}</p>}
+                      {editor.role && <p className="text-xs text-slate-500">{editor.role}</p>}
                       {editor.email && (
                         <a href={`mailto:${editor.email}`} className="text-xs text-indigo-600 hover:underline">{editor.email}</a>
                       )}
                       {editor.recent_article_title && (
-                        <p className="mt-1 text-xs text-gray-400">
+                        <p className="mt-1 text-xs text-slate-400">
                           Recent: {editor.recent_article_url ? (
                             <a href={editor.recent_article_url} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">{editor.recent_article_title}</a>
                           ) : editor.recent_article_title}
@@ -144,19 +144,19 @@ export default function PublisherDetailPage({ params }: { params: Promise<{ id: 
         <Card>
           <CardTitle>Outreach History</CardTitle>
           {outreachHistory.length === 0 ? (
-            <p className="mt-4 text-sm text-gray-500">No outreach yet for this publisher.</p>
+            <p className="mt-4 text-sm text-slate-500">No outreach yet for this publisher.</p>
           ) : (
             <div className="mt-4 space-y-3">
               {outreachHistory.map((o) => (
-                <div key={o.id} className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
+                <div key={o.id} className="flex items-center justify-between rounded-xl border border-slate-100 p-3">
                   <div>
                     <div className="flex items-center gap-2">
                       <Badge variant={o.status === 'replied' ? 'success' : o.status === 'contacted' ? 'info' : 'default'}>{o.status}</Badge>
                       <Badge>{o.channel || 'N/A'}</Badge>
                     </div>
-                    {o.message && <p className="mt-1 text-sm text-gray-600 line-clamp-1">{o.message}</p>}
+                    {o.message && <p className="mt-1 text-sm text-slate-600 line-clamp-1">{o.message}</p>}
                   </div>
-                  <span className="text-xs text-gray-400">{o.sent_at ? formatDate(o.sent_at) : '-'}</span>
+                  <span className="text-xs text-slate-400">{o.sent_at ? formatDate(o.sent_at) : '-'}</span>
                 </div>
               ))}
             </div>

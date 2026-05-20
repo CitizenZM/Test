@@ -151,8 +151,8 @@ export default function CampaignsPage() {
           </div>
         ) : campaigns.length === 0 ? (
           <Card className="flex flex-col items-center justify-center py-16">
-            <p className="text-gray-500">No campaigns yet</p>
-            <p className="mt-1 text-sm text-gray-400">Create a campaign to start recruiting publishers</p>
+            <p className="text-slate-500">No campaigns yet</p>
+            <p className="mt-1 text-sm text-slate-400">Create a campaign to start recruiting publishers</p>
             <Button className="mt-4" onClick={() => setShowCreate(true)}>
               <Plus className="mr-2 h-4 w-4" /> Create your first campaign
             </Button>
@@ -229,7 +229,7 @@ export default function CampaignsPage() {
             options={GOAL_OPTIONS}
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Channels</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Channels</label>
             <div className="flex flex-wrap gap-2">
               {CHANNEL_OPTIONS.map(ch => (
                 <button
@@ -239,7 +239,7 @@ export default function CampaignsPage() {
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                     newChannels.includes(ch)
                       ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
-                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
                   {ch}

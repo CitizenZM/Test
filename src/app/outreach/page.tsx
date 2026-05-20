@@ -238,7 +238,7 @@ function OutreachContent() {
                   <TableRow key={o.id}>
                     <TableCell className="font-medium">{o.publisher?.publisher_name || o.publisher_id}</TableCell>
                     <TableCell><Badge variant={o.channel === 'linkedin' ? 'info' : 'purple'}>{o.channel}</Badge></TableCell>
-                    <TableCell><span className="text-xs text-gray-500">{o.message_type || '-'}</span></TableCell>
+                    <TableCell><span className="text-xs text-slate-500">{o.message_type || '-'}</span></TableCell>
                     <TableCell><Badge variant={o.status === 'replied' ? 'success' : o.status === 'contacted' ? 'info' : 'default'}>{o.status}</Badge></TableCell>
                     <TableCell>{o.sent_at ? formatDate(o.sent_at) : '-'}</TableCell>
                     <TableCell className="max-w-xs truncate">{o.message || '-'}</TableCell>
@@ -246,7 +246,7 @@ function OutreachContent() {
                 ))}
                 {outreachList.length === 0 && (
                   <TableRow>
-                    <TableCell className="text-center text-gray-500 py-8" colSpan={6}>
+                    <TableCell className="text-center text-slate-500 py-8" colSpan={6}>
                       No outreach records yet. Select a publisher and generate your first message above.
                     </TableCell>
                   </TableRow>

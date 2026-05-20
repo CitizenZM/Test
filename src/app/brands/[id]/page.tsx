@@ -136,7 +136,6 @@ export default function BrandDetailPage() {
     setGenerating(true);
     setGenerateError(null);
     try {
-      // Save profile first
       await fetch(`/api/brands/${brandId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -189,7 +188,7 @@ export default function BrandDetailPage() {
       <>
         <Header title="Brand Profile" description="Loading..." />
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
         </div>
       </>
     );
@@ -239,9 +238,9 @@ export default function BrandDetailPage() {
                   ]}
                 />
 
-                <div className="border-t border-gray-200 pt-4">
+                <div className="border-t border-slate-100 pt-4">
                   <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-[13px] font-medium text-slate-700">
                       Competitors
                     </label>
                     <Button
@@ -255,8 +254,8 @@ export default function BrandDetailPage() {
                     </Button>
                   </div>
                   {competitors.length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-gray-200 p-4 text-center">
-                      <p className="text-sm text-gray-400">
+                    <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center">
+                      <p className="text-sm text-slate-400">
                         No competitors added yet
                       </p>
                       <Button
@@ -291,7 +290,7 @@ export default function BrandDetailPage() {
                           />
                           <button
                             onClick={() => removeCompetitor(idx)}
-                            className="shrink-0 rounded p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                            className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -299,7 +298,7 @@ export default function BrandDetailPage() {
                       ))}
                     </div>
                   )}
-                  <p className="mt-2 text-xs text-gray-400">
+                  <p className="mt-2 text-[11px] text-slate-400">
                     Up to 5 competitors. AI analyzes their affiliate strategies
                     to recommend publishers.
                   </p>
@@ -341,13 +340,13 @@ export default function BrandDetailPage() {
           {/* Section B: AI Recruitment Strategy */}
           <div className="space-y-6">
             {generateError && !generating && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex gap-3">
-                <span className="text-red-500 mt-0.5">⚠</span>
+              <div className="rounded-xl border border-red-200/60 bg-red-50/80 p-4 flex gap-3">
+                <span className="text-red-500 mt-0.5">&#9888;</span>
                 <div>
-                  <p className="text-sm font-medium text-red-800">{generateError}</p>
+                  <p className="text-[13px] font-medium text-red-800">{generateError}</p>
                   {generateError.includes('Settings') && (
-                    <Link href="/settings" className="text-sm text-red-700 underline mt-1 block">
-                      Go to Settings →
+                    <Link href="/settings" className="text-[13px] text-red-700 underline mt-1 block">
+                      Go to Settings
                     </Link>
                   )}
                 </div>
@@ -357,10 +356,10 @@ export default function BrandDetailPage() {
               <Card>
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mb-4" />
-                  <p className="text-lg font-medium text-gray-900">
+                  <p className="text-lg font-semibold text-slate-800">
                     Generating Recruitment Strategy
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-[13px] text-slate-500 mt-1">
                     AI is analyzing {brandName} and competitors to build a
                     publisher targeting strategy...
                   </p>
@@ -371,7 +370,9 @@ export default function BrandDetailPage() {
                 {/* Target Categories */}
                 <Card>
                   <div className="flex items-center gap-2 mb-3">
-                    <Target className="h-5 w-5 text-indigo-600" />
+                    <div className="h-7 w-7 rounded-lg bg-indigo-50 flex items-center justify-center">
+                      <Target className="h-4 w-4 text-indigo-600" />
+                    </div>
                     <CardTitle>Target Categories</CardTitle>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -386,7 +387,9 @@ export default function BrandDetailPage() {
                 {/* Discovery Keywords */}
                 <Card>
                   <div className="flex items-center gap-2 mb-3">
-                    <Search className="h-5 w-5 text-purple-600" />
+                    <div className="h-7 w-7 rounded-lg bg-violet-50 flex items-center justify-center">
+                      <Search className="h-4 w-4 text-violet-600" />
+                    </div>
                     <CardTitle>Discovery Keywords</CardTitle>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -409,7 +412,9 @@ export default function BrandDetailPage() {
                 {/* Publisher Tags */}
                 <Card>
                   <div className="flex items-center gap-2 mb-3">
-                    <Tag className="h-5 w-5 text-gray-600" />
+                    <div className="h-7 w-7 rounded-lg bg-slate-100 flex items-center justify-center">
+                      <Tag className="h-4 w-4 text-slate-600" />
+                    </div>
                     <CardTitle>Publisher Tags</CardTitle>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -425,11 +430,13 @@ export default function BrandDetailPage() {
                 {strategy.publisher_strategy && (
                   <Card>
                     <div className="flex items-center gap-2 mb-3">
-                      <Users className="h-5 w-5 text-indigo-600" />
+                      <div className="h-7 w-7 rounded-lg bg-indigo-50 flex items-center justify-center">
+                        <Users className="h-4 w-4 text-indigo-600" />
+                      </div>
                       <CardTitle>Publisher Strategy</CardTitle>
                     </div>
-                    <div className="rounded-lg bg-indigo-50 p-4">
-                      <p className="text-sm text-indigo-800 whitespace-pre-line">
+                    <div className="rounded-xl bg-indigo-50/60 border border-indigo-100/60 p-4">
+                      <p className="text-[13px] text-indigo-800 whitespace-pre-line leading-relaxed">
                         {strategy.publisher_strategy}
                       </p>
                     </div>
@@ -440,11 +447,13 @@ export default function BrandDetailPage() {
                 {strategy.recruitment_approach && (
                   <Card>
                     <div className="flex items-center gap-2 mb-3">
-                      <MessageSquare className="h-5 w-5 text-purple-600" />
+                      <div className="h-7 w-7 rounded-lg bg-violet-50 flex items-center justify-center">
+                        <MessageSquare className="h-4 w-4 text-violet-600" />
+                      </div>
                       <CardTitle>Recruitment Approach</CardTitle>
                     </div>
-                    <div className="rounded-lg bg-purple-50 p-4">
-                      <p className="text-sm text-purple-800 whitespace-pre-line">
+                    <div className="rounded-xl bg-violet-50/60 border border-violet-100/60 p-4">
+                      <p className="text-[13px] text-violet-800 whitespace-pre-line leading-relaxed">
                         {strategy.recruitment_approach}
                       </p>
                     </div>
@@ -455,11 +464,13 @@ export default function BrandDetailPage() {
                 {strategy.commission_strategy && (
                   <Card>
                     <div className="flex items-center gap-2 mb-3">
-                      <DollarSign className="h-5 w-5 text-emerald-600" />
+                      <div className="h-7 w-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+                        <DollarSign className="h-4 w-4 text-emerald-600" />
+                      </div>
                       <CardTitle>Commission Strategy</CardTitle>
                     </div>
-                    <div className="rounded-lg bg-emerald-50 p-4">
-                      <p className="text-sm text-emerald-800 whitespace-pre-line">
+                    <div className="rounded-xl bg-emerald-50/60 border border-emerald-100/60 p-4">
+                      <p className="text-[13px] text-emerald-800 whitespace-pre-line leading-relaxed">
                         {strategy.commission_strategy}
                       </p>
                     </div>
@@ -469,61 +480,51 @@ export default function BrandDetailPage() {
                 {/* Ideal Publisher Attributes */}
                 <Card>
                   <div className="flex items-center gap-2 mb-3">
-                    <TrendingUp className="h-5 w-5 text-green-600" />
+                    <div className="h-7 w-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+                      <TrendingUp className="h-4 w-4 text-emerald-600" />
+                    </div>
                     <CardTitle>Ideal Publisher Attributes</CardTitle>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Min. Monthly Traffic</span>
-                      <span className="font-medium">
+                      <span className="text-slate-500">Min. Monthly Traffic</span>
+                      <span className="font-semibold text-slate-800">
                         {strategy.ideal_publisher_attributes.min_traffic.toLocaleString()}
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">
-                        Content Types
-                      </p>
-                      <div className="flex flex-wrap gap-1">
+                      <p className="text-[12px] font-medium text-slate-500 mb-1.5">Content Types</p>
+                      <div className="flex flex-wrap gap-1.5">
                         {strategy.ideal_publisher_attributes.content_types.map(
                           (ct) => (
-                            <Badge key={ct} variant="default">
-                              {ct}
-                            </Badge>
+                            <Badge key={ct} variant="default">{ct}</Badge>
                           )
                         )}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">
-                        Affiliate Networks
-                      </p>
-                      <div className="flex flex-wrap gap-1">
+                      <p className="text-[12px] font-medium text-slate-500 mb-1.5">Affiliate Networks</p>
+                      <div className="flex flex-wrap gap-1.5">
                         {strategy.ideal_publisher_attributes.affiliate_networks.map(
                           (n) => (
-                            <Badge key={n} variant="info">
-                              {n}
-                            </Badge>
+                            <Badge key={n} variant="info">{n}</Badge>
                           )
                         )}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">
-                        Tier Priorities
-                      </p>
-                      <div className="flex flex-wrap gap-1">
+                      <p className="text-[12px] font-medium text-slate-500 mb-1.5">Tier Priorities</p>
+                      <div className="flex flex-wrap gap-1.5">
                         {strategy.ideal_publisher_attributes.tier_priorities.map(
                           (t) => (
-                            <Badge key={t} variant="success">
-                              {t}
-                            </Badge>
+                            <Badge key={t} variant="success">{t}</Badge>
                           )
                         )}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 mb-1">Countries</p>
-                      <div className="flex flex-wrap gap-1">
+                      <p className="text-[12px] font-medium text-slate-500 mb-1.5">Countries</p>
+                      <div className="flex flex-wrap gap-1.5">
                         {strategy.ideal_publisher_attributes.countries.map(
                           (c) => (
                             <Badge key={c} variant="default">
@@ -540,8 +541,8 @@ export default function BrandDetailPage() {
                 {/* Audience Fit Notes */}
                 <Card>
                   <CardTitle>Audience Fit Notes</CardTitle>
-                  <div className="mt-3 rounded-lg bg-blue-50 p-4">
-                    <p className="text-sm text-blue-800">
+                  <div className="mt-3 rounded-xl bg-blue-50/60 border border-blue-100/60 p-4">
+                    <p className="text-[13px] text-blue-800 leading-relaxed">
                       {strategy.audience_fit_notes}
                     </p>
                   </div>
@@ -550,8 +551,8 @@ export default function BrandDetailPage() {
                 {/* Competitive Insights */}
                 <Card>
                   <CardTitle>Competitive Insights</CardTitle>
-                  <div className="mt-3 rounded-lg bg-amber-50 p-4">
-                    <p className="text-sm text-amber-800">
+                  <div className="mt-3 rounded-xl bg-amber-50/60 border border-amber-100/60 p-4">
+                    <p className="text-[13px] text-amber-800 leading-relaxed">
                       {strategy.competitive_insights}
                     </p>
                   </div>
@@ -561,8 +562,8 @@ export default function BrandDetailPage() {
                 {strategy.outreach_angle && (
                   <Card>
                     <CardTitle>Outreach Angle</CardTitle>
-                    <div className="mt-3 rounded-lg bg-green-50 p-4">
-                      <p className="text-sm text-green-800">
+                    <div className="mt-3 rounded-xl bg-emerald-50/60 border border-emerald-100/60 p-4">
+                      <p className="text-[13px] text-emerald-800 leading-relaxed">
                         {strategy.outreach_angle}
                       </p>
                     </div>
@@ -573,18 +574,18 @@ export default function BrandDetailPage() {
                 <Card>
                   <div className="flex items-center justify-between mb-3">
                     <CardTitle>AI Confidence</CardTitle>
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-bold text-slate-800">
                       {strategy.ai_confidence}%
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+                  <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-indigo-600 transition-all"
+                      className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-500 transition-all duration-500"
                       style={{ width: `${strategy.ai_confidence}%` }}
                     />
                   </div>
                   {strategyDate && (
-                    <p className="mt-2 text-xs text-gray-400">
+                    <p className="mt-2 text-[11px] text-slate-400">
                       Generated {formatDate(strategyDate)}
                     </p>
                   )}
@@ -610,11 +611,13 @@ export default function BrandDetailPage() {
             ) : (
               <Card>
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Sparkles className="h-12 w-12 text-gray-300 mb-4" />
-                  <p className="text-lg font-medium text-gray-900">
+                  <div className="h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                    <Sparkles className="h-7 w-7 text-slate-400" />
+                  </div>
+                  <p className="text-lg font-semibold text-slate-800">
                     No Strategy Generated
                   </p>
-                  <p className="text-sm text-gray-500 mt-1 max-w-sm">
+                  <p className="text-[13px] text-slate-500 mt-1 max-w-sm">
                     Fill in the advertiser profile and competitors, then click
                     &quot;Generate AI Strategy&quot; to get AI-powered publisher
                     recruitment recommendations.
@@ -627,8 +630,8 @@ export default function BrandDetailPage() {
       </div>
 
       {saved && (
-        <div className="fixed bottom-4 right-4 rounded-lg bg-green-50 border border-green-200 p-4 shadow-lg">
-          <p className="text-sm text-green-700 font-medium">
+        <div className="fixed bottom-4 right-4 rounded-2xl bg-emerald-50 border border-emerald-200/60 p-4 shadow-xl shadow-emerald-900/5 animate-fade-in">
+          <p className="text-[13px] text-emerald-700 font-semibold">
             Profile saved successfully
           </p>
         </div>

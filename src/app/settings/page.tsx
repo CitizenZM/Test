@@ -161,12 +161,12 @@ export default function SettingsPage() {
         {/* AI Configuration — most important section */}
         <Card>
           <div className="flex items-center gap-3 mb-1">
-            <div className="h-9 w-9 rounded-lg bg-violet-100 flex items-center justify-center">
+            <div className="h-9 w-9 rounded-xl bg-violet-100 flex items-center justify-center">
               <Key className="h-5 w-5 text-violet-600" />
             </div>
             <div>
               <CardTitle>AI Configuration</CardTitle>
-              <p className="text-sm text-gray-500">Required for strategy generation and publisher discovery</p>
+              <p className="text-sm text-slate-500">Required for strategy generation and publisher discovery</p>
             </div>
             <div className="ml-auto">
               {openaiStatus === 'configured' && <Badge variant="success">AI Active</Badge>}
@@ -175,7 +175,7 @@ export default function SettingsPage() {
           </div>
 
           {openaiStatus === 'not_set' && (
-            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 flex gap-3">
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 flex gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-amber-800">OpenAI API Key Required</p>
@@ -192,7 +192,7 @@ export default function SettingsPage() {
           )}
 
           {openaiStatus === 'configured' && (
-            <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 flex items-center gap-3">
+            <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-3 flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-sm font-medium text-green-800">API Key Configured</p>
@@ -205,7 +205,7 @@ export default function SettingsPage() {
           )}
 
           <div className="mt-5 space-y-3">
-            <p className="text-sm font-medium text-gray-700">
+            <p className="text-sm font-medium text-slate-700">
               {openaiStatus === 'configured' ? 'Update API Key' : 'Enter Your OpenAI API Key'}
             </p>
             <div className="relative">
@@ -214,20 +214,20 @@ export default function SettingsPage() {
                 value={openaiKey}
                 onChange={e => setOpenaiKey(e.target.value)}
                 placeholder="sk-proj-..."
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
                 onKeyDown={e => { if (e.key === 'Enter') handleSaveOpenaiKey(); }}
               />
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
 
             {deploying && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <RefreshCw className="h-5 w-5 text-blue-500 animate-spin" />
                   <div>
@@ -245,7 +245,7 @@ export default function SettingsPage() {
             )}
 
             {saveResult && !deploying && (
-              <div className={`flex items-center gap-2 text-sm p-3 rounded-lg ${
+              <div className={`flex items-center gap-2 text-sm p-3 rounded-xl ${
                 saveResult.ok
                   ? 'bg-green-50 text-green-700 border border-green-200'
                   : 'bg-red-50 text-red-700 border border-red-200'
@@ -278,7 +278,7 @@ export default function SettingsPage() {
                 Get API Key <ExternalLink className="h-3 w-3" />
               </a>
             </div>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-slate-400">
               The key is validated, encrypted, and stored securely. It persists across deployments.
             </p>
           </div>
@@ -287,17 +287,17 @@ export default function SettingsPage() {
         {/* Managed Brands */}
         <Card>
           <CardTitle>Managed Brands</CardTitle>
-          <p className="mt-1 text-sm text-gray-500">Brands under Cell Digital agency management</p>
+          <p className="mt-1 text-sm text-slate-500">Brands under Cell Digital agency management</p>
           <div className="mt-4 space-y-3">
             {MANAGED_BRANDS.map((brand) => (
-              <div key={brand.id} className="flex items-center justify-between rounded-lg border border-gray-100 p-4">
+              <div key={brand.id} className="flex items-center justify-between rounded-xl border border-slate-100 p-4">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{ backgroundColor: brand.color + '20' }}>
                     <Building2 className="h-4 w-4" style={{ color: brand.color }} />
                   </div>
                   <div>
                     <p className="font-medium">{brand.name}</p>
-                    <p className="text-xs text-gray-500">{brand.category}</p>
+                    <p className="text-xs text-slate-500">{brand.category}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export default function SettingsPage() {
             <CardTitle>Impact.com Integration</CardTitle>
             <Badge variant="info">Partner Platform</Badge>
           </div>
-          <p className="mt-1 text-sm text-gray-500">Connect to your Impact.com account to sync partners and track performance</p>
+          <p className="mt-1 text-sm text-slate-500">Connect to your Impact.com account to sync partners and track performance</p>
           <div className="mt-4 space-y-4">
             <Input
               id="impact-sid"
@@ -361,7 +361,7 @@ export default function SettingsPage() {
             <CardTitle>Email Configuration</CardTitle>
             <Badge variant="purple">Resend</Badge>
           </div>
-          <p className="mt-1 text-sm text-gray-500">Configure email sending for outreach campaigns</p>
+          <p className="mt-1 text-sm text-slate-500">Configure email sending for outreach campaigns</p>
           <div className="mt-4 space-y-4">
             <Input
               id="resend-key"
@@ -398,30 +398,30 @@ export default function SettingsPage() {
         {/* API Key Status */}
         <Card>
           <CardTitle>Integration Status</CardTitle>
-          <p className="mt-1 text-sm text-gray-500">Current state of all configured integrations</p>
+          <p className="mt-1 text-sm text-slate-500">Current state of all configured integrations</p>
           <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
+            <div className="flex items-center justify-between rounded-xl border border-slate-100 p-3">
               <div className="flex items-center gap-2">
-                <Key className="h-4 w-4 text-gray-400" />
+                <Key className="h-4 w-4 text-slate-400" />
                 <span className="text-sm font-medium">OpenAI GPT-4o API</span>
                 {openaiPreview && (
-                  <span className="text-xs text-gray-400 font-mono">{openaiPreview}</span>
+                  <span className="text-xs text-slate-400 font-mono">{openaiPreview}</span>
                 )}
               </div>
               <Badge variant={openaiStatus === 'configured' ? 'success' : 'warning'}>
                 {openaiStatus === 'configured' ? 'Active' : 'Not Configured'}
               </Badge>
             </div>
-            <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
+            <div className="flex items-center justify-between rounded-xl border border-slate-100 p-3">
               <div className="flex items-center gap-2">
-                <Key className="h-4 w-4 text-gray-400" />
+                <Key className="h-4 w-4 text-slate-400" />
                 <span className="text-sm font-medium">Supabase Database</span>
               </div>
               <Badge variant="success">Connected</Badge>
             </div>
-            <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
+            <div className="flex items-center justify-between rounded-xl border border-slate-100 p-3">
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-gray-400" />
+                <Mail className="h-4 w-4 text-slate-400" />
                 <span className="text-sm font-medium">Resend Email</span>
               </div>
               <Badge variant={resendKey ? 'success' : 'warning'}>{resendKey ? 'Configured' : 'Not Set'}</Badge>

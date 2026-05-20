@@ -85,7 +85,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
   if (!campaign) {
     return (
       <div className="flex flex-col items-center justify-center h-96">
-        <p className="text-gray-500">Campaign not found</p>
+        <p className="text-slate-500">Campaign not found</p>
         <Link href="/campaigns" className="mt-4 text-indigo-600 hover:underline">Back to campaigns</Link>
       </div>
     );
@@ -131,11 +131,11 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             </Badge>
           </Card>
           <Card>
-            <p className="text-sm text-gray-500">Goal</p>
+            <p className="text-sm text-slate-500">Goal</p>
             <p className="text-lg font-semibold mt-1 capitalize">{campaign.goal || '-'}</p>
           </Card>
           <Card>
-            <p className="text-sm text-gray-500">Channels</p>
+            <p className="text-sm text-slate-500">Channels</p>
             <div className="flex gap-1 flex-wrap mt-1">
               {(campaign.channels || []).map(ch => (
                 <Badge key={ch} variant="info">{ch}</Badge>
@@ -143,7 +143,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             </div>
           </Card>
           <Card>
-            <p className="text-sm text-gray-500">Brand</p>
+            <p className="text-sm text-slate-500">Brand</p>
             <p className="text-lg font-semibold mt-1">{brand?.brand_name || '-'}</p>
             {brand?.primary_domain && (
               <a href={brand.primary_domain} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 flex items-center gap-1 hover:underline">
@@ -157,7 +157,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         {campaign.briefing_text && (
           <Card>
             <CardTitle>Campaign Briefing</CardTitle>
-            <p className="mt-3 text-sm text-gray-700 whitespace-pre-line">{campaign.briefing_text}</p>
+            <p className="mt-3 text-sm text-slate-700 whitespace-pre-line">{campaign.briefing_text}</p>
           </Card>
         )}
 
@@ -191,8 +191,8 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             {/* Content Strategy */}
             {strategy.content_strategy && (
               <div className="mt-4 space-y-2">
-                <h4 className="text-sm font-semibold text-gray-900">Content Strategy</h4>
-                <p className="text-sm text-gray-700">
+                <h4 className="text-sm font-semibold text-slate-800">Content Strategy</h4>
+                <p className="text-sm text-slate-700">
                   {String(strategy.content_strategy.key_angle || '')}
                 </p>
                 {Array.isArray(strategy.content_strategy.hook_themes) && (
@@ -208,12 +208,12 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             {/* Audience Analysis */}
             {strategy.audience_analysis && (
               <div className="mt-4 space-y-2">
-                <h4 className="text-sm font-semibold text-gray-900">Audience Analysis</h4>
-                <p className="text-sm text-gray-700">
+                <h4 className="text-sm font-semibold text-slate-800">Audience Analysis</h4>
+                <p className="text-sm text-slate-700">
                   <span className="font-medium">Primary:</span> {String(strategy.audience_analysis.primary_segment || '')}
                 </p>
                 {strategy.audience_analysis.secondary_segment && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-600">
                     <span className="font-medium">Secondary:</span> {String(strategy.audience_analysis.secondary_segment)}
                   </p>
                 )}
@@ -223,17 +223,17 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             {/* Channel Recommendations */}
             {channelRecs && (
               <div className="mt-4 space-y-2">
-                <h4 className="text-sm font-semibold text-gray-900">Channel Recommendations</h4>
+                <h4 className="text-sm font-semibold text-slate-800">Channel Recommendations</h4>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {Object.entries(channelRecs).map(([ch, info]) => (
-                    <div key={ch} className="rounded-lg border border-gray-100 p-3">
+                    <div key={ch} className="rounded-xl border border-slate-100 p-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium capitalize">{ch}</span>
                         <Badge variant={info.priority === 'high' ? 'success' : info.priority === 'medium' ? 'warning' : 'default'}>
                           {info.priority || 'normal'}
                         </Badge>
                       </div>
-                      {info.notes && <p className="text-xs text-gray-500 mt-1">{info.notes}</p>}
+                      {info.notes && <p className="text-xs text-slate-500 mt-1">{info.notes}</p>}
                     </div>
                   ))}
                 </div>
@@ -247,20 +247,20 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
           <CardTitle>Details</CardTitle>
           <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-gray-500">Created</p>
+              <p className="text-slate-500">Created</p>
               <p className="font-medium">{formatDate(campaign.created_at)}</p>
             </div>
             <div>
-              <p className="text-gray-500">Updated</p>
+              <p className="text-slate-500">Updated</p>
               <p className="font-medium">{formatDate(campaign.updated_at)}</p>
             </div>
             <div>
-              <p className="text-gray-500">Campaign ID</p>
+              <p className="text-slate-500">Campaign ID</p>
               <p className="font-mono text-xs">{campaign.id}</p>
             </div>
             {campaign.user_id && (
               <div>
-                <p className="text-gray-500">User ID</p>
+                <p className="text-slate-500">User ID</p>
                 <p className="font-mono text-xs">{campaign.user_id}</p>
               </div>
             )}

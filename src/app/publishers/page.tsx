@@ -366,7 +366,7 @@ function PublishersPageInner() {
             {activeStrategy && (
               <div className="flex items-center gap-2 ml-auto">
                 <Badge variant="success">Strategy Applied</Badge>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-slate-500">
                   Filters auto-set from {selectedBrand?.brand_name} strategy
                 </span>
               </div>
@@ -392,7 +392,7 @@ function PublishersPageInner() {
         {showStrategyPanel && activeStrategy && (
           <div className="rounded-2xl border border-indigo-100/60 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
                 <Target className="h-4 w-4 text-indigo-600" />
                 Strategy Summary for {selectedBrand?.brand_name}
               </h4>
@@ -403,7 +403,7 @@ function PublishersPageInner() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1.5">Target Categories</p>
+                <p className="text-xs font-medium text-slate-500 mb-1.5">Target Categories</p>
                 <div className="flex flex-wrap gap-1.5">
                   {activeStrategy.target_categories.map((cat) => (
                     <button
@@ -413,7 +413,7 @@ function PublishersPageInner() {
                         'text-xs px-2.5 py-1 rounded-full border transition-colors',
                         category === cat
                           ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
-                          : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                       )}
                     >
                       {cat}
@@ -422,7 +422,7 @@ function PublishersPageInner() {
                 </div>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1.5">Discovery Keywords</p>
+                <p className="text-xs font-medium text-slate-500 mb-1.5">Discovery Keywords</p>
                 <div className="flex flex-wrap gap-1.5">
                   {activeStrategy.discovery_keywords.map((kw) => (
                     <button
@@ -432,7 +432,7 @@ function PublishersPageInner() {
                         'text-xs px-2.5 py-1 rounded-full border transition-colors',
                         keyword === kw
                           ? 'bg-purple-100 border-purple-300 text-purple-700'
-                          : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                       )}
                     >
                       {kw}
@@ -441,7 +441,7 @@ function PublishersPageInner() {
                 </div>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1.5">Publisher Tags</p>
+                <p className="text-xs font-medium text-slate-500 mb-1.5">Publisher Tags</p>
                 <div className="flex flex-wrap gap-1.5">
                   {activeStrategy.target_publisher_tags.map((tag) => (
                     <Badge key={tag} variant="default">{tag}</Badge>
@@ -449,8 +449,8 @@ function PublishersPageInner() {
                 </div>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1.5">Ideal Attributes</p>
-                <div className="flex flex-wrap gap-1.5 text-xs text-gray-600">
+                <p className="text-xs font-medium text-slate-500 mb-1.5">Ideal Attributes</p>
+                <div className="flex flex-wrap gap-1.5 text-xs text-slate-600">
                   <Badge variant="info">
                     Min. {activeStrategy.ideal_publisher_attributes.min_traffic.toLocaleString()} visits/mo
                   </Badge>
@@ -463,20 +463,20 @@ function PublishersPageInner() {
 
             {/* Publisher Strategy (from enhanced AI) */}
             {activeStrategy.publisher_strategy && (
-              <div className="border-t border-gray-100 pt-4">
+              <div className="border-t border-slate-100 pt-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Users className="h-4 w-4 text-indigo-600" />
-                  <p className="text-xs font-medium text-gray-500">Publisher Strategy</p>
+                  <p className="text-xs font-medium text-slate-500">Publisher Strategy</p>
                 </div>
-                <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-4">
+                <p className="text-sm text-slate-700 whitespace-pre-line line-clamp-4">
                   {activeStrategy.publisher_strategy}
                 </p>
               </div>
             )}
 
             {/* Active Filters Summary */}
-            <div className="border-t border-gray-100 pt-3 flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-gray-400">Active filters:</span>
+            <div className="border-t border-slate-100 pt-3 flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-slate-400">Active filters:</span>
               {category && <Badge variant="info">{category}</Badge>}
               {tier && <Badge variant="purple">{tier}</Badge>}
               {network && <Badge variant="success">{network}</Badge>}
@@ -488,7 +488,7 @@ function PublishersPageInner() {
         {/* AI Discovery Section */}
         <div className="rounded-2xl border border-slate-200/60 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">
+            <h3 className="text-sm font-semibold text-slate-800">
               AI Publisher Discovery
               {selectedBrand && activeStrategy && (
                 <span className="ml-2 text-xs font-normal text-indigo-600">
@@ -543,7 +543,7 @@ function PublishersPageInner() {
           {/* Quick keyword/category chips when strategy is active */}
           {activeStrategy && activeStrategy.discovery_keywords.length > 1 && (
             <div className="mt-3 flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-gray-400">Quick keywords:</span>
+              <span className="text-xs text-slate-400">Quick keywords:</span>
               {activeStrategy.discovery_keywords.map((kw) => (
                 <button
                   key={kw}
@@ -552,7 +552,7 @@ function PublishersPageInner() {
                     'text-xs px-2 py-0.5 rounded-full border transition-colors',
                     keyword === kw
                       ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
-                      : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                      : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                   )}
                 >
                   {kw}
@@ -583,7 +583,7 @@ function PublishersPageInner() {
               </div>
             )}
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500">
             {totalCount > 0 ? `Page ${page + 1} of ${totalPages} (${totalCount.toLocaleString()} total)` : `${publishers.length} publishers`}
           </p>
         </div>
@@ -658,7 +658,7 @@ function PublishersPageInner() {
             <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
               <ChevronLeft className="h-4 w-4" /> Previous
             </Button>
-            <span className="text-sm text-gray-600">Page {page + 1}</span>
+            <span className="text-sm text-slate-600">Page {page + 1}</span>
             <Button variant="outline" size="sm" disabled={publishers.length < PAGE_SIZE} onClick={() => setPage(page + 1)}>
               Next <ChevronRight className="h-4 w-4" />
             </Button>

@@ -164,11 +164,13 @@ export default function BrandsPage() {
         ) : brands.length === 0 && defaultBrands.length === 0 ? (
           <Card>
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Building2 className="h-12 w-12 text-gray-300 mb-4" />
-              <p className="text-lg font-medium text-gray-900">
+              <div className="h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                <Building2 className="h-7 w-7 text-slate-400" />
+              </div>
+              <p className="text-lg font-semibold text-slate-800">
                 No brands configured yet
               </p>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-slate-500 mt-1 max-w-sm">
                 Add your first advertiser profile to get started with AI-powered
                 publisher recruitment.
               </p>
@@ -190,11 +192,11 @@ export default function BrandsPage() {
                 <Card key={brand.id}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-indigo-50 flex items-center justify-center">
-                        <Building2 className="h-5 w-5 text-indigo-600" />
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-sm shadow-indigo-500/20">
+                        <Building2 className="h-5 w-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-[15px] font-semibold text-slate-800">
                           {brand.brand_name}
                         </h3>
                         {brand.primary_domain && (
@@ -202,7 +204,7 @@ export default function BrandsPage() {
                             href={`https://${brand.primary_domain}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-indigo-600 hover:underline flex items-center gap-1"
+                            className="text-[11px] text-indigo-600 hover:underline flex items-center gap-1"
                           >
                             {brand.primary_domain}
                             <ExternalLink className="h-3 w-3" />
@@ -211,7 +213,7 @@ export default function BrandsPage() {
                       </div>
                     </div>
                     <Badge variant={hasStrategy ? 'success' : 'warning'}>
-                      {hasStrategy ? 'Strategy Generated' : 'No Strategy'}
+                      {hasStrategy ? 'Strategy Ready' : 'No Strategy'}
                     </Badge>
                   </div>
 
@@ -222,8 +224,8 @@ export default function BrandsPage() {
                   )}
 
                   {competitors.length > 0 && (
-                    <p className="mt-3 text-sm text-gray-500">
-                      <span className="font-medium text-gray-700">
+                    <p className="mt-3 text-[13px] text-slate-500">
+                      <span className="font-medium text-slate-700">
                         Competitors:
                       </span>{' '}
                       {competitors.map((c) => c.name).join(', ')}
@@ -231,7 +233,7 @@ export default function BrandsPage() {
                   )}
 
                   {hasStrategy && profile?.strategy_generated_at && (
-                    <p className="mt-2 text-xs text-gray-400">
+                    <p className="mt-2 text-[11px] text-slate-400">
                       Strategy generated {formatDate(profile.strategy_generated_at)}
                     </p>
                   )}
@@ -264,25 +266,22 @@ export default function BrandsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div
-                      className="h-10 w-10 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: mb.color + '20' }}
+                      className="h-10 w-10 rounded-xl flex items-center justify-center"
+                      style={{ background: `linear-gradient(135deg, ${mb.color}, ${mb.color}cc)` }}
                     >
-                      <span
-                        className="text-sm font-bold"
-                        style={{ color: mb.color }}
-                      >
+                      <span className="text-sm font-bold text-white">
                         {mb.name[0]}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-[15px] font-semibold text-slate-800">
                         {mb.name}
                       </h3>
                       <a
                         href={`https://${mb.domain}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-indigo-600 hover:underline flex items-center gap-1"
+                        className="text-[11px] text-indigo-600 hover:underline flex items-center gap-1"
                       >
                         {mb.domain}
                         <ExternalLink className="h-3 w-3" />
@@ -294,7 +293,7 @@ export default function BrandsPage() {
                 <Badge variant="info" className="mt-3">
                   {mb.category}
                 </Badge>
-                <p className="mt-3 text-sm text-gray-500">
+                <p className="mt-3 text-[13px] text-slate-500">
                   Managed brand preset. Add as an advertiser profile to generate
                   an AI recruitment strategy.
                 </p>
@@ -350,7 +349,7 @@ export default function BrandsPage() {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-[13px] font-medium text-slate-700">
                 Competitors
               </label>
               <Button
@@ -384,14 +383,14 @@ export default function BrandsPage() {
                   />
                   <button
                     onClick={() => removeCompetitor(idx)}
-                    className="shrink-0 rounded p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                    className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               ))}
             </div>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-[11px] text-slate-400">
               Up to 5 competitors. AI will analyze their affiliate strategies.
             </p>
           </div>
