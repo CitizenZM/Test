@@ -91,8 +91,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const strategy = campaign.strategy as Record<string, any> | null;
+  const strategy = campaign.strategy as Record<string, unknown> | null;
   const channelRecs = strategy?.channel_recommendations as Record<string, { priority?: string; notes?: string; formats?: string[] }> | undefined;
 
   return (
@@ -189,15 +188,15 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             </div>
 
             {/* Content Strategy */}
-            {strategy.content_strategy && (
+            {!!strategy.content_strategy && (
               <div className="mt-4 space-y-2">
                 <h4 className="text-sm font-semibold text-slate-800">Content Strategy</h4>
                 <p className="text-sm text-slate-700">
-                  {String(strategy.content_strategy.key_angle || '')}
+                  {String((strategy.content_strategy as Record<string, unknown>).key_angle || '')}
                 </p>
-                {Array.isArray(strategy.content_strategy.hook_themes) && (
+                {Array.isArray((strategy.content_strategy as Record<string, unknown>).hook_themes) && (
                   <div className="flex gap-2 flex-wrap">
-                    {strategy.content_strategy.hook_themes.map((theme: string, i: number) => (
+                    {((strategy.content_strategy as Record<string, unknown>).hook_themes as string[]).map((theme: string, i: number) => (
                       <Badge key={i} variant="default">{theme}</Badge>
                     ))}
                   </div>
@@ -206,15 +205,15 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
             )}
 
             {/* Audience Analysis */}
-            {strategy.audience_analysis && (
+            {!!strategy.audience_analysis && (
               <div className="mt-4 space-y-2">
                 <h4 className="text-sm font-semibold text-slate-800">Audience Analysis</h4>
                 <p className="text-sm text-slate-700">
-                  <span className="font-medium">Primary:</span> {String(strategy.audience_analysis.primary_segment || '')}
+                  <span className="font-medium">Primary:</span> {String((strategy.audience_analysis as Record<string, unknown>).primary_segment || '')}
                 </p>
-                {strategy.audience_analysis.secondary_segment && (
+                {!!(strategy.audience_analysis as Record<string, unknown>).secondary_segment && (
                   <p className="text-sm text-slate-600">
-                    <span className="font-medium">Secondary:</span> {String(strategy.audience_analysis.secondary_segment)}
+                    <span className="font-medium">Secondary:</span> {String((strategy.audience_analysis as Record<string, unknown>).secondary_segment)}
                   </p>
                 )}
               </div>

@@ -1,5 +1,6 @@
 import { getOpenAIClient } from './client';
 import { Publisher, MessageType, MANAGED_BRANDS } from '@/types';
+import { sanitizeForPrompt } from './sanitize';
 
 interface GenerateParams {
   publisher: Publisher;
@@ -57,19 +58,20 @@ export async function generateOutreachMessage(params: GenerateParams): Promise<s
   const brandTemplate = BRAND_TEMPLATES[brandKey] || BRAND_TEMPLATES.tcl;
   const displayBrandName = brand_name || MANAGED_BRANDS.find(b => b.id === brandKey)?.name || 'TCL';
 
+  const s = sanitizeForPrompt;
   const publisherInfo = `
-- Publisher Name: ${publisher.publisher_name}
-- Website/Domain: ${publisher.website || publisher.domain || 'N/A'}
-- Category: ${publisher.category || 'N/A'}
-- Affiliate Type: ${publisher.affiliate_type || 'N/A'}
-- Current Network: ${publisher.affiliate_network || 'N/A'}
-- Tier: ${publisher.tier_priority || 'N/A'}
+- Publisher Name: ${s(publisher.publisher_name)}
+- Website/Domain: ${s(publisher.website || publisher.domain)}
+- Category: ${s(publisher.category)}
+- Affiliate Type: ${s(publisher.affiliate_type)}
+- Current Network: ${s(publisher.affiliate_network)}
+- Tier: ${s(publisher.tier_priority)}
 - Est. Monthly Traffic: ${publisher.estimated_monthly_visits ? publisher.estimated_monthly_visits.toLocaleString() : 'N/A'}
 - Historical GMV: ${publisher.historical_gmv ? '$' + publisher.historical_gmv.toLocaleString() : 'N/A'}
-- Countries: ${publisher.countries || 'N/A'}
-- Contact: ${publisher.contact_name || 'N/A'} (${publisher.contact_email || 'N/A'})
-- Description: ${publisher.description || 'N/A'}
-- TCL Focus Areas: ${publisher.tcl_focus_areas || 'N/A'}`;
+- Countries: ${s(publisher.countries)}
+- Contact: ${s(publisher.contact_name)} (${s(publisher.contact_email)})
+- Description: ${s(publisher.description)}
+- TCL Focus Areas: ${s(publisher.tcl_focus_areas)}`;
 
   const brandInfo = brand_context
     ? `Brand: ${displayBrandName}\nProducts: ${brand_context.products}\nCommission: ${brand_context.commission_info}\nValue Props: ${brand_context.value_props.join(', ')}`

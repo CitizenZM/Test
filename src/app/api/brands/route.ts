@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function unpackProfile(profile: any) {
+interface BrandProfileRow {
+  id: string;
+  brand_id: string;
+  value_props_json?: {
+    __competitors?: unknown[];
+    __recruitment_strategy?: unknown;
+    __strategy_generated_at?: string | null;
+  } | null;
+  [key: string]: unknown;
+}
+
+interface BrandRow {
+  id: string;
+  brand_name: string;
+  brand_profiles?: BrandProfileRow[] | BrandProfileRow | null;
+  [key: string]: unknown;
+}
+
+function unpackProfile(profile: BrandProfileRow) {
   if (!profile) return profile;
   const vp = profile.value_props_json;
   if (vp && typeof vp === 'object' && '__competitors' in vp) {
@@ -13,8 +30,7 @@ function unpackProfile(profile: any) {
   return profile;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function unpackBrand(brand: any) {
+function unpackBrand(brand: BrandRow) {
   if (!brand) return brand;
   if (Array.isArray(brand.brand_profiles)) {
     brand.brand_profiles = brand.brand_profiles.map(unpackProfile);
@@ -72,17 +88,14 @@ export async function POST(request: NextRequest) {
       __recruitment_strategy: null,
       __strategy_generated_at: null,
     };
-    await supabase.from('brand_profiles').insert({
+    const { data: profile } = await supabase.from('brand_profiles').insert({
       brand_id: brand.id,
       value_props_json: packed,
-    });
+    }).select().single();
+
+    const result: BrandRow = { ...brand, brand_profiles: profile ? [unpackProfile(profile)] : [] };
+    return NextResponse.json(result, { status: 201 });
   }
 
-  const { data } = await supabase
-    .from('brands')
-    .select('*, brand_profiles(*)')
-    .eq('id', brand.id)
-    .single();
-
-  return NextResponse.json(unpackBrand(data), { status: 201 });
+  return NextResponse.json({ ...brand, brand_profiles: [] }, { status: 201 });
 }

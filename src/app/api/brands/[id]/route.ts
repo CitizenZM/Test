@@ -15,8 +15,18 @@ function packProfileExtras(
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function unpackProfile(profile: any) {
+interface BrandProfileRow {
+  id: string;
+  brand_id: string;
+  value_props_json?: {
+    __competitors?: unknown[];
+    __recruitment_strategy?: unknown;
+    __strategy_generated_at?: string | null;
+  } | null;
+  [key: string]: unknown;
+}
+
+function unpackProfile(profile: BrandProfileRow) {
   if (!profile) return profile;
   const vp = profile.value_props_json;
   if (vp && typeof vp === 'object' && '__competitors' in vp) {

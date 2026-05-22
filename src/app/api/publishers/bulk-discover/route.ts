@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { discoverPublishers } from '@/lib/ai/research-agent';
 import { formatAIError } from '@/lib/ai/error-messages';
+import { rateLimit } from '@/lib/rate-limit';
 import type { RecruitmentStrategy } from '@/types';
 
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
+  const { allowed } = rateLimit('bulk-discover', 5, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Please wait a minute.' }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
     const {

@@ -417,3 +417,8 @@ export function getPriorityColor(p: string | null): 'danger' | 'warning' | 'info
   if (p.includes('P3')) return 'info';
   return 'default';
 }
+
+export function getFirstProfile(brand: BrandWithProfile): BrandProfile | undefined {
+  if (Array.isArray(brand.brand_profiles)) return brand.brand_profiles[0];
+  return brand.brand_profiles || undefined;
+}

@@ -17,8 +17,8 @@ import {
   TIER_PRIORITIES,
   AFFILIATE_NETWORKS,
   type BrandWithProfile,
-  type BrandProfile,
   type RecruitmentStrategy,
+  getFirstProfile,
 } from '@/types';
 import {
   Search,
@@ -118,9 +118,7 @@ function PublishersPageInner() {
   }, [brands, selectedBrandId]);
 
   function getProfileStrategy(brand: BrandWithProfile): RecruitmentStrategy | null {
-    const profile: BrandProfile | undefined = Array.isArray(brand.brand_profiles)
-      ? brand.brand_profiles[0]
-      : brand.brand_profiles || undefined;
+    const profile = getFirstProfile(brand);
     return profile?.recruitment_strategy || null;
   }
 

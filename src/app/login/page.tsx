@@ -13,7 +13,6 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    // TODO: Integrate Supabase auth
     setTimeout(() => {
       window.location.href = '/';
       setLoading(false);

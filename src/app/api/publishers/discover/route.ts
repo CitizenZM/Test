@@ -2,23 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { discoverPublishers } from '@/lib/ai/research-agent';
 import { formatAIError } from '@/lib/ai/error-messages';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const maxDuration = 60;
 
-function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T | null> {
-  return Promise.race([
-    Promise.resolve(promise),
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
-  ]);
-}
-
 export async function POST(request: NextRequest) {
+  const { allowed } = rateLimit('discover', 10, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Please wait a minute before trying again.' }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
     const { keyword, category, product, brand, strategy } = body;
 
-    if (!keyword) {
+    if (!keyword || typeof keyword !== 'string') {
       return NextResponse.json({ error: 'Keyword is required' }, { status: 400 });
+    }
+
+    if (keyword.length > 200) {
+      return NextResponse.json({ error: 'Keyword too long (max 200 characters)' }, { status: 400 });
     }
 
     const publishers = await discoverPublishers({ keyword, category, product, brand, strategy });
@@ -27,10 +30,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    const rows = publishers.map((p) => ({
+    const rows = publishers.map((p) => {
+      let domain: string | null = null;
+      try {
+        if (p.website) domain = new URL(p.website.startsWith('http') ? p.website : `https://${p.website}`).hostname;
+      } catch { /* invalid URL */ }
+      return {
       publisher_name: p.publisher_name,
       website: p.website,
-      domain: p.website ? new URL(p.website.startsWith('http') ? p.website : `https://${p.website}`).hostname : null,
+      domain,
       category: p.category,
       affiliate_type: p.affiliate_type,
       estimated_monthly_visits: p.estimated_monthly_visits,
@@ -38,19 +46,18 @@ export async function POST(request: NextRequest) {
       description: p.description,
       summary_note: p.summary_note,
       enrichment_status: 'ai_discovered',
-    }));
+    };
+    });
 
-    // Try to persist to Supabase with a 5s timeout
     try {
       const supabase = createServiceClient();
-      const result = await withTimeout(
-        supabase.from('publishers').insert(rows).select(),
-        5000
-      );
+      const { data, error } = await supabase
+        .from('publishers')
+        .insert(rows)
+        .select();
 
-      if (result && !('error' in result && result.error)) {
-        const data = (result as { data: unknown }).data;
-        if (data) return NextResponse.json(data);
+      if (!error && data) {
+        return NextResponse.json(data);
       }
     } catch {
       // DB insert failed — return raw results

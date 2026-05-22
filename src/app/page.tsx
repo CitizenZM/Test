@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   MANAGED_BRANDS,
   type BrandWithProfile,
-  type BrandProfile,
+  getFirstProfile,
 } from '@/types';
 import {
   Users,
@@ -244,9 +244,7 @@ export default function DashboardPage() {
           <div className="space-y-2.5">
             {(() => {
               const brandsWithStrategy = brands.filter((b) => {
-                const p: BrandProfile | undefined = Array.isArray(b.brand_profiles)
-                  ? b.brand_profiles[0]
-                  : b.brand_profiles || undefined;
+                const p = getFirstProfile(b);
                 return p?.recruitment_strategy;
               });
 
@@ -254,9 +252,7 @@ export default function DashboardPage() {
 
               if (brandsWithStrategy.length > 0) {
                 return brandsWithStrategy.map((brand, i) => {
-                  const p: BrandProfile | undefined = Array.isArray(brand.brand_profiles)
-                    ? brand.brand_profiles[0]
-                    : brand.brand_profiles || undefined;
+                  const p = getFirstProfile(brand);
                   const s = p?.recruitment_strategy;
                   if (!s) return null;
                   const c = gradients[i % gradients.length];
