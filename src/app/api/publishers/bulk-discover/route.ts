@@ -7,8 +7,30 @@ import type { RecruitmentStrategy } from '@/types';
 
 export const maxDuration = 60;
 
+async function getExistingPublishers(supabase: ReturnType<typeof createServiceClient>): Promise<{ domains: Set<string>; names: Set<string> }> {
+  const { data } = await supabase
+    .from('publishers')
+    .select('domain, publisher_name')
+    .limit(10000);
+  const domains = new Set<string>();
+  const names = new Set<string>();
+  for (const r of data || []) {
+    if (r.domain) domains.add(r.domain.toLowerCase());
+    if (r.publisher_name) names.add(r.publisher_name.toLowerCase());
+  }
+  return { domains, names };
+}
+
+function extractDomain(website: string): string | null {
+  try {
+    return new URL(website.startsWith('http') ? website : `https://${website}`).hostname;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
-  const { allowed } = rateLimit('bulk-discover', 5, 60_000);
+  const { allowed } = rateLimit('bulk-discover', 10, 60_000);
   if (!allowed) {
     return NextResponse.json({ error: 'Rate limit exceeded. Please wait a minute.' }, { status: 429 });
   }
@@ -32,80 +54,119 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createServiceClient();
+    const existing = await getExistingPublishers(supabase);
+    const existingDomains = existing.domains;
+    const existingNames = existing.names;
     let totalSaved = 0;
+    let totalDuplicatesSkipped = 0;
     const errors: string[] = [];
 
-    // Build 20 search tasks across all keywords × categories for ~200 publishers
+    const variations = [
+      '', 'affiliate partner', 'review site', 'content creator', 'comparison website',
+    ];
+
     const tasks: Array<{ keyword: string; category: string }> = [];
-
-    // Pass 1: each keyword with rotating categories
-    for (let i = 0; i < keywords.length && tasks.length < 20; i++) {
-      const cat = categories.length > 0 ? categories[i % categories.length] : '';
-      tasks.push({ keyword: keywords[i], category: cat });
+    for (const kw of keywords) {
+      for (const variation of variations) {
+        const fullKw = variation ? `${kw} ${variation}` : kw;
+        const cat = categories.length > 0 ? categories[tasks.length % categories.length] : '';
+        tasks.push({ keyword: fullKw, category: cat });
+      }
     }
 
-    // Pass 2: fill remaining slots with keyword variations
-    const variations = ['affiliate partner', 'review site', 'deal publisher', 'coupon site', 'content creator'];
-    while (tasks.length < 20) {
-      const idx = tasks.length - keywords.length;
-      const kw = keywords[idx % keywords.length];
-      const variation = variations[idx % variations.length];
-      const cat = categories.length > 0 ? categories[(tasks.length) % categories.length] : '';
-      tasks.push({ keyword: `${kw} ${variation}`, category: cat });
+    const BATCH_SIZE = 5;
+    const batches: Array<Array<{ keyword: string; category: string }>> = [];
+    for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
+      batches.push(tasks.slice(i, i + BATCH_SIZE));
     }
 
-    for (const task of tasks) {
-      try {
-        const publishers = await discoverPublishers({
-          keyword: task.keyword,
-          category: task.category,
-          brand,
-          strategy,
-        });
+    const startTime = Date.now();
+    const TIME_LIMIT = 40_000;
 
-        if (publishers.length === 0) continue;
+    for (const batch of batches) {
+      if (Date.now() - startTime > TIME_LIMIT) break;
 
-        const rows = publishers.map((p) => ({
-          publisher_name: p.publisher_name,
-          website: p.website,
-          domain: p.website
-            ? (() => {
-                try {
-                  return new URL(
-                    p.website.startsWith('http') ? p.website : `https://${p.website}`
-                  ).hostname;
-                } catch {
-                  return p.website;
-                }
-              })()
-            : null,
-          category: p.category,
-          affiliate_type: p.affiliate_type,
-          estimated_monthly_visits: p.estimated_monthly_visits,
-          affiliate_network: p.affiliate_friendly ? 'Affiliate Friendly' : null,
-          description: p.description,
-          summary_note: p.summary_note,
-          enrichment_status: 'ai_discovered',
-        }));
+      const excludeDomains = Array.from(existingDomains).slice(0, 100);
 
-        const { data, error } = await supabase
-          .from('publishers')
-          .insert(rows)
-          .select('id');
+      const results = await Promise.allSettled(
+        batch.map((task) =>
+          discoverPublishers({
+            keyword: task.keyword,
+            category: task.category,
+            brand,
+            strategy,
+            exclude_domains: excludeDomains,
+          })
+        )
+      );
 
-        if (!error && data) {
-          totalSaved += data.length;
-        } else if (error) {
-          errors.push(error.message);
+      for (const result of results) {
+        if (result.status !== 'fulfilled' || !result.value.length) {
+          if (result.status === 'rejected') {
+            errors.push(result.reason?.message || 'Unknown error');
+          }
+          continue;
         }
-      } catch (err) {
-        errors.push(err instanceof Error ? err.message : 'Unknown error');
+
+        const newRows = [];
+        for (const p of result.value) {
+          const domain = extractDomain(p.website);
+          if (!domain) continue;
+          const domainLower = domain.toLowerCase();
+          const nameLower = p.publisher_name?.toLowerCase() || '';
+          if (existingDomains.has(domainLower) || existingNames.has(nameLower)) {
+            totalDuplicatesSkipped++;
+            continue;
+          }
+          existingDomains.add(domainLower);
+          existingNames.add(nameLower);
+          newRows.push({
+            publisher_name: p.publisher_name,
+            website: p.website,
+            domain,
+            category: p.category,
+            affiliate_type: p.affiliate_type,
+            estimated_monthly_visits: p.estimated_monthly_visits,
+            affiliate_network: p.affiliate_friendly ? 'Affiliate Friendly' : null,
+            description: p.description,
+            summary_note: p.summary_note,
+            enrichment_status: 'ai_discovered',
+          });
+        }
+
+        if (newRows.length > 0) {
+          for (let i = 0; i < newRows.length; i += 5) {
+            const batch = newRows.slice(i, i + 5);
+            try {
+              const { data, error } = await supabase
+                .from('publishers')
+                .insert(batch)
+                .select('id');
+              if (!error && data) {
+                totalSaved += data.length;
+              } else if (error?.message?.includes('unique constraint')) {
+                for (const row of batch) {
+                  const { error: singleErr } = await supabase
+                    .from('publishers')
+                    .insert(row)
+                    .select('id')
+                    .single();
+                  if (!singleErr) totalSaved++;
+                }
+              }
+            } catch {
+              // skip failed batch
+            }
+          }
+        }
       }
     }
 
     return NextResponse.json({
       total_saved: totalSaved,
-      tasks_run: tasks.length,
+      duplicates_skipped: totalDuplicatesSkipped,
+      tasks_attempted: Math.min(tasks.length, batches.length * BATCH_SIZE),
+      total_existing: existingDomains.size,
       errors: errors.slice(0, 5),
     });
   } catch (err) {

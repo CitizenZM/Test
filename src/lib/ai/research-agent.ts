@@ -8,6 +8,8 @@ interface DiscoverParams {
   product?: string;
   brand?: string;
   strategy?: RecruitmentStrategy;
+  exclude_domains?: string[];
+  count?: number;
 }
 
 interface DiscoveredPublisher {
@@ -40,14 +42,19 @@ export async function discoverPublishers(params: DiscoverParams): Promise<Discov
 Prioritize publishers matching this strategy profile.`
     : '';
 
+  const count = params.count || 25;
+  const excludeInstructions = params.exclude_domains?.length
+    ? `\n\nIMPORTANT: Do NOT include any of these already-known domains: ${params.exclude_domains.slice(0, 100).join(', ')}. Find NEW publishers not in this list.`
+    : '';
+
   const prompt = `You are an expert affiliate marketing researcher. Find publishers, blogs, media sites, and content creators that would be great affiliate partners.
 
 Search criteria:
 - Keyword: ${s(params.keyword)}
 ${params.category ? `- Category: ${s(params.category)}` : ''}
-${params.product ? `- Product focus: ${s(params.product)}` : ''}${brandContext}${strategyContext}
+${params.product ? `- Product focus: ${s(params.product)}` : ''}${brandContext}${strategyContext}${excludeInstructions}
 
-Return exactly 10 publisher recommendations as a JSON array. Each publisher should have:
+Return exactly ${count} publisher recommendations as a JSON array. Each publisher should have:
 - publisher_name: Publisher/site name
 - website: Website URL
 - category: Content category (e.g., "Tech Editorial / Reviews", "Deal Sites", "Cashback / Loyalty")
@@ -61,7 +68,7 @@ Return ONLY a JSON object with key "publishers" containing the array, no other t
 
   const response = await client.chat.completions.create({
     model: 'gpt-4o-mini',
-    max_tokens: 4096,
+    max_tokens: 8192,
     response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: 'You return valid JSON only.' },
